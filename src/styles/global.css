@@ -1,0 +1,1161 @@
+/* ---------- Tokens ---------- */
+:root {
+  /* ===== SHAPE CONTROLS: change these to resize things ===== */
+  --root-size: min(29vh, 21vw);      /* root hexagon radius, home view */
+  --root-size-panel: min(12vh, 8vw); /* root hexagon radius while a panel is open */
+  --child-ratio: 0.36;               /* child hexagon size as a fraction of the root */
+  --ring: 1.42;                      /* distance of children from the root, in root radii */
+  --stroke: 2px;                     /* hexagon outline thickness */
+  --radius: 1px;                     /* cards and tiles */
+  --radius-lg: 24px;                 /* islands and the timeline panel */
+  --peek-width: 32rem;               /* all hover cards share these three */
+  --peek-height: auto;
+  --peek-gap: 12.6rem;
+
+  /* ===== ASH PALETTE: the only colour on the site ===== */
+  --ash-100: #f2f2f1;
+  --ash-200: #c0c0ba;
+  --ash-300: #949492;
+  --ash-500: #4b4b49;
+  --ash-700: #242419;
+  --ash-900: #1d1d1c;
+
+  --paper: var(--ash-200);
+  --surface: var(--ash-100);
+  --ink: var(--ash-900);
+  --muted: #62625f;
+  --line: #1d1d1c1f;
+  --line-strong: rgba(29, 29, 28, 0.3);
+
+  /* Old accent names, kept so the remaining rules still work. All one ash tone. */
+  --saffron: var(--ash-700);
+  --coral: var(--ash-700);
+  --teal: var(--ash-700);
+  --blue: var(--ash-900);
+  --violet: var(--ash-700);
+  --magenta: var(--ash-700);
+
+  --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --hex-narrow: polygon(
+    10% 25%,
+    10% 75%,
+    50% 100%,
+    90% 75%,
+    90% 25%,
+    50% 0%
+  );
+}
+
+/* Registered so the tree can animate smoothly between its large and compact sizes. */
+@property --R {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 100px;
+}
+@property --ang {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* Faint honeycomb behind everything, fading towards the edges. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34.64' height='60' viewBox='0 0 34.64 60'%3E%3Cpath d='M0 10L17.32 0L34.64 10V30L17.32 40L0 30Z M17.32 40V60' fill='none' stroke='%2310272b' stroke-opacity='.1'/%3E%3C/svg%3E");
+  background-size: 52px 90px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, #000 0%, transparent 75%);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.noscript {
+  padding: 2rem;
+  text-align: center;
+}
+
+/* ---------- Layout: stage (tree) + content panel ---------- */
+.app {
+  --R: min(29vh, 45vw);
+  min-height: 100vh;
+  transition: --R 0.8s var(--ease);
+}
+.app[data-mode='panel'] {
+  --R: min(25vh, 8vw);
+}
+
+.stage {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  transition:
+    left 0.4s var(--ease),
+    width 0.4s var(--ease);
+}
+.app[data-mode='panel'] .stage {
+  width: 35%;
+}
+.app[data-mode='panel'][data-side='right'] .stage {
+  left: 60%;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  width: 60%;
+  min-height: 100vh;
+  margin-left: 35%;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  animation: content-in 0.7s var(--ease) 0.35s both;
+}
+.app[data-side='right'] .content {
+  margin-left: 0;
+}
+.content[data-panel='experience'] {
+  display: grid;
+  place-items: center;
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--R) * 0.29);
+  max-width: 100%;
+}
+
+/* ---------- Hexagons ---------- */
+.root-wrap {
+  --s: var(--R);
+  position: relative;
+  width: calc(var(--R) * 1.14);
+  height: calc(var(--R) * 1.13);
+}
+
+/* .hexwrap {
+  filter: drop-shadow(0 calc(var(--s) * 0.06) calc(var(--s) * 0.12) rgba(16, 39, 43, 0.28));
+} */
+.root-hex {
+  position: absolute;
+  inset: 0;
+  --c1: var(--saffron);
+  --c2: var(--coral);
+  --c3: var(--violet);
+}
+
+.hexbtn {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  clip-path: var(--hex-narrow);
+  background: conic-gradient(from var(--ang), var(--c1), var(--c2), var(--c3, var(--c2)), var(--c1));
+}
+/* .root-hex .hexbtn,
+.node[data-active='true'] .hexbtn {
+  animation: spin 18s linear infinite;
+} */
+/* @keyframes spin {
+  to {
+    --ang: 360deg;
+  }
+} */
+
+.hex-in {
+  position: absolute;
+  inset: calc(var(--s) * 0.025 + 2px);
+  clip-path: var(--hex-narrow);
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.hex-in img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.root-hex .hexbtn:hover img {
+  transform: scale(1.15);
+}
+
+/* Child nodes: start folded into the root, then slide out to a random side. */
+.node {
+  --s: calc(var(--R) * 0.23);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--s) * 1.3);
+  height: calc(var(--s) * 1.2);
+  transform: translate(-50%, -50%) scale(1.45);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.8s var(--ease) calc(var(--i) * 0.012s),
+    opacity 0.5s ease calc(var(--i) * 0.02s);
+}
+.node[data-visible='true'] {
+  transform: translate(-50%, -50%) translate(calc(var(--R) * var(--rfactor) * var(--kx)), calc(var(--R) * var(--rfactor) * var(--ky))) scale(1.2);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.node .hex-in {
+  background: var(--surface);
+  color: var(--icon);
+  transition: background 0.3s ease;
+}
+.node .hex-in svg {
+  width: calc(var(--s) * 0.6);
+  height: calc(var(--s) * 0.6);
+}
+.node .hexbtn:hover .hex-in {
+  background: #fff;
+}
+.node[data-active='true'] .hex-in {
+  /* background: var(--ink); */
+  background: #f79595;
+
+  color: var(--c1);
+}
+
+.node-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: var(--font-display);
+  /* font-size: clamp(0.95rem, calc(var(--R) * 0.1), 1rem); */
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transition: opacity 0.9s ease 0s;
+}
+.node[data-visible='true'] .node-label {
+  opacity: 1;
+  transition-delay: 0.9s;
+}
+/* Labels sit far outside the tree, on whichever side the node faces. */
+.node[data-side='right'] .node-label {
+  left: calc(100% + 1.25rem);
+}
+.node[data-side='left'] .node-label {
+  right: calc(100% + 1.25rem);
+
+}
+/* In the compact tree there is no room beside the nodes, so labels drop below them. */
+.app[data-mode='panel'] .node-label {
+  top: 100%;
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, 0.4rem);
+  font-size: clamp(0.55rem, calc(var(--R) * 0.07), 0.75rem);
+}
+
+/* Connector lines from root to children. */
+.link {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--R) * 1.42);
+  height: 2px;
+  background: linear-gradient(90deg, var(--line-strong), transparent);
+  transform-origin: 0 50%;
+  transform: rotate(calc(var(--a) * -1deg)) scaleX(0);
+  transition: transform 0.8s var(--ease) calc(var(--i) * 0.12s);
+  pointer-events: none;
+}
+.link[data-visible='true'] {
+  transform: rotate(calc(var(--a) * -1deg)) scaleX(1);
+}
+
+/* ---------- Identity block ---------- */
+.identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--R) * 0.035);
+  text-align: center;
+}
+.name {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, calc(var(--R) * 0.3), 2.2rem);
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 0.7;
+  /* margin-top: 1.95em; */
+}
+.spec {
+  font-size: clamp(0.8rem, calc(var(--R) * 0.075), 1.2rem);
+  font-weight: 500;
+}
+.spec .bar {
+  color: var(--muted);
+  white-space: pre;
+}
+
+.grad-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* gap: calc(var(--R) * 0); */
+}
+.grad {
+  padding: 0.2em 0.4em;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: clamp(0.72rem, calc(var(--R) * 0.062), 1rem);
+  text-underline-offset: 0.3em;
+}
+.grad:hover,
+.grad[aria-expanded='true'] {
+  text-decoration: underline;
+}
+
+/* Space is always reserved so the root never shifts when the capsules appear. */
+.capsules {
+  display: flex;
+  gap: 0.5rem;
+  min-height: 2.1rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.4rem);
+  transition:
+    opacity 0.35s ease,
+    transform 0.5s var(--ease);
+}
+.capsules[data-visible='true'] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.capsule-wrap {
+  position: relative;
+}
+.capsule {
+  padding: 0.3em 1.1em;
+  border: 1.5px solid var(--ink);
+  /* border-radius: 999px; */
+  background: var(--surface);
+  cursor: pointer;
+  font-size: clamp(0.72rem, calc(var(--R) * 0.062), 0.95rem);
+  font-weight: 600;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.capsule:hover {
+  background: #fff;
+}
+.capsule[data-active='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.contacts {
+  display: flex;
+  gap: 0.75rem;
+}
+.contacts a {
+  display: grid;
+  place-items: center;
+  width: clamp(2rem, calc(var(--R) * 0.17), 2.8rem);
+  height: clamp(2rem, calc(var(--R) * 0.17), 2.8rem);
+  border: 1.5px solid var(--ink);
+  /* border-radius: 50%; */
+  font-size: clamp(1rem, calc(var(--R) * 0.085), 1.4rem);
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    opacity 0.3s ease,
+    color 0.2s ease;
+}
+.contacts a:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.collapse-btn {
+  position: absolute;
+  top: 1.25rem;
+  left: 50%;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  /* padding: 0.5rem 1rem; */
+  border: 0;
+  /* border-radius: 999px; */
+  background: none;
+  color: var(--ink);
+  /* background: var(--ink); */
+  /* color: var(--paper); */
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: collapse-in 0.5s var(--ease) both;
+}
+.collapse-btn:hover {
+  background: #3700ff41;
+  animation: collapse-in 0.5s var(--ease) both;
+}
+@keyframes collapse-in {
+  from {
+    opacity: 0;
+    translate: -50% -0.5rem;
+  }
+}
+
+/* ---------- Spacious ---------- */
+/* Spacious, fixed spacing while a panel is open */
+.tree,
+.identity,
+.grad-wrap {
+  transition: gap 0.8s var(--ease);
+}
+.app[data-mode='panel'] .tree {
+  gap: 4.95rem;
+}
+.app[data-mode='panel'] .identity {
+  gap: 1.2rem;
+}
+.app[data-mode='panel'] .grad-wrap {
+  gap: 1.2rem;
+}
+
+@media (max-width: 900px) {
+  /* The mobile tree has to fit in 46vh, so tighten a little */
+  .app[data-mode='panel'] .tree {
+    gap: 8.8rem;
+  }
+  .app[data-mode='panel'] .identity {
+    gap: 1.5rem;
+  }
+  .app[data-mode='panel'] .grad-wrap {
+    gap: 0.4rem;
+  }
+
+  /* .app[data-mode='panel'] .node-label {
+    font-size: clamp(0.65rem, calc(var(--R) * 0.07), 0.75rem);
+  } */
+}
+
+/* ---------- Hover peeks ---------- */
+/* One hover card for every node: same spot, same size */
+.peek,
+.gh-card {
+  position: absolute;
+  top: calc(100% + var(--peek-gap));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 40;
+  width: min(var(--peek-width), 90vw);
+  height: var(--peek-height);
+  overflow: hidden;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.88rem;
+  text-align: left;
+  pointer-events: none;
+  animation: peek-in 0.25s var(--ease) both;
+}
+@keyframes peek-in { from { opacity: 0; transform: translateY(0.3rem); } }
+.peek--cols ul { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.25rem; }
+
+@keyframes peek-in {
+  from {
+    opacity: 0;
+    transform: translateY(4.3rem);
+  }
+}
+
+.peek-title {
+  margin-bottom: 0.4rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.peek ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.peek li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+}
+
+.peek li b {
+  margin-left: auto;
+  padding-left: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.gh-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.gh-avatar {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  clip-path: var(--hex-narrow);
+  background: var(--ink);
+}
+.gh-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gh-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.gh-handle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--muted);
+}
+.gh-bio {
+  margin: 0.75rem 0;
+  line-height: 1.25;
+}
+.gh-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+  padding-top: 0.25rem;
+  border-top: 0.8px solid var(--line);
+}
+.gh-stats dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.gh-stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+
+/* ---------- Panels ---------- */
+.panel-head {
+  margin-bottom: 1.75rem;
+}
+.panel-head h2,
+.island-head h2,
+.exp-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.6vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.panel-head p,
+.exp-head p {
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+
+/* Projects: never more than three columns. */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(15rem, calc((100% - 2.5rem) / 3)), 1fr));
+  gap: 1.25rem;
+}
+
+.pcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border: 1.5px solid var(--ink);
+  /* border-radius: 1.25rem; */
+  background: var(--surface);
+  box-shadow: 0.3rem 0.3rem 0 var(--line-strong);
+  transition:
+    box-shadow 0.2s ease,
+    translate 0.2s ease;
+}
+.pcard:hover {
+  translate: -0.1rem -0.1rem;
+  box-shadow: 0.45rem 0.45rem 0 var(--ink);
+}
+.pcard-logo {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  aspect-ratio: 1;
+  flex: none;
+  overflow: hidden;
+  /* border-radius: 0.8rem; */
+  background: hsl(var(--hue) 50% 32%);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+.pcard-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pcard-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.pcard-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.pcard-link {
+  text-decoration: none;
+}
+/* The whole card is one link to the repo; the See Project button sits above it. */
+.pcard-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* border-radius: inherit; */
+}
+.pcard-desc {
+  font-size: 1rem;
+  font-weight: 400;
+}
+.shields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.shield {
+  padding: 0.12rem 0.5rem;
+  /* border-radius: 4px; */
+  font-size: 0.72rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+}
+.pcard-btn {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 0.5rem 1rem;
+  /* border-radius: 999px; */
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.pcard-btn:hover {
+  background: #1d4247;
+}
+
+.pcard--compact {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.85rem;
+  /* border-radius: 1rem; */
+  box-shadow: none;
+}
+.pcard--compact:hover {
+  translate: none;
+  box-shadow: none;
+  background: #fff;
+}
+.pcard--compact .pcard-logo {
+  width: 2.6rem;
+  /* border-radius: 0.6rem; */
+  font-size: 0.9rem;
+}
+.pcard--compact .pcard-name {
+  font-size: 1.1rem;
+}
+.pcard--compact .pcard-desc {
+  font-size: 0.9rem;
+}
+.pcard--compact .pcard-btn {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+/* Skills */
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.island {
+  padding: clamp(1.25rem, 2.5vw, 2.25rem);
+  border: 1.5px solid var(--ink);
+  /* border-radius: 1.25rem; */
+  background: var(--surface);
+}
+.island-head {
+  margin-bottom: 1.25rem;
+}
+.bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+.group {
+  padding: 1.1rem;
+  /* border-radius: 1rem; */
+  background: color-mix(in srgb, var(--tone) 9%, var(--surface));
+}
+.group h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.group h3::before {
+  content: '';
+  width: 0.7rem;
+  height: 0.7rem;
+  background: var(--tone);
+  clip-path: var(--hex-narrow);
+}
+.group ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.badge {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  /* border-radius: 999px; */
+  background: var(--surface);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.island--soft {
+  scroll-margin-bottom: 2.5rem;
+  animation: soft-in 1.2s ease both;
+}
+@keyframes soft-in {
+  from {
+    opacity: 0;
+  }
+}
+.soft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1.25rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.soft-grid h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.soft-grid p {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Experience: compact timeline panel */
+.exp {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 34rem);
+  max-height: min(82vh, 46rem);
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  /* border-radius: 1.5rem; */
+  background: var(--surface);
+}
+.exp-head {
+  padding: 1.25rem 1.5rem 0.75rem;
+}
+.exp-head h2 {
+  font-size: 1.9rem;
+}
+.timeline {
+  flex: 1;
+  margin: 0;
+  padding: 0.75rem 1.25rem 1rem 1.5rem;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.tl-item {
+  position: relative;
+  padding: 0 0 1rem 1.6rem;
+}
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: 0.42rem;
+  top: 1rem;
+  bottom: -0.1rem;
+  width: 2px;
+  background: var(--line-strong);
+}
+.tl-item:last-child::before {
+  display: none;
+}
+.tl-dot {
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  background: var(--ink);
+  clip-path: var(--hex-narrow);
+}
+.tl-item[data-active='true'] .tl-dot {
+  background: var(--violet);
+}
+.tl-card {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--line-strong);
+  /* border-radius: 1rem; */
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.tl-card:hover {
+  background: #fff;
+}
+.tl-item[data-active='true'] .tl-card {
+  border-color: var(--violet);
+  background: color-mix(in srgb, var(--violet) 8%, var(--surface));
+}
+.tl-card time {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.tl-card h3 {
+  margin-top: 0.1rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.tl-org {
+  color: var(--violet);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.tl-summary {
+  margin-top: 0.4rem;
+  font-size: 0.92rem;
+}
+.exp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1.25rem;
+  border-top: 1.5px solid var(--ink);
+  background: color-mix(in srgb, var(--violet) 8%, var(--surface));
+}
+.exp-foot-title {
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.expand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: none;
+  padding: 0.4rem 0.95rem;
+  /* border-radius: 999px; */
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.expand-link:hover {
+  background: #1d4247;
+}
+
+/* Courses */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  gap: 1.25rem;
+}
+.course {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 1.5px solid var(--ink);
+  /* border-radius: 1.25rem; */
+  background: var(--surface);
+}
+.course-code {
+  align-self: flex-start;
+  padding: 0.1rem 0.6rem;
+  /* border-radius: 999px; */
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.course h3 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.course-desc {
+  color: var(--muted);
+}
+.course-project {
+  margin-top: 0.6rem;
+  padding: 0.75rem;
+  /* border-radius: 1rem; */
+  background: var(--paper);
+}
+.course-project-label {
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* ---------- Small screens: tree sits on top, panel scrolls below ---------- */
+@media (max-width: 900px) {
+  .app {
+    --R: min(18vh, 26vw);
+  }
+  .app[data-mode='panel'] {
+    --R: min(9vh, 13vw);
+  }
+  .app[data-mode='panel'] .stage,
+  .app[data-mode='panel'][data-side='right'] .stage {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 46vh;
+    border-bottom: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  .collapse-btn {
+    top: 1.5rem;
+    padding: 1.35rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  .content,
+  .app[data-side='right'] .content {
+    width: 100%;
+    margin-left: 0;
+    min-height: 54vh;
+  }
+  .content[data-panel='experience'] {
+    place-items: start center;
+  }
+  .node-label {
+    top: 100%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, 0.3rem);
+    font-size: 0.3rem;
+  }
+  .node[data-side='right'] .node-label,
+  .node[data-side='left'] .node-label {
+    left: 50%;
+    right: auto;
+  }
+  .exp {
+    max-height: 60vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* ---------- Language filter ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip {
+  display: inline-flex; 
+  align-items: baseline; 
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem; 
+  border: 1px solid var(--line-strong); 
+  border-radius: var(--radius);
+  background: transparent; 
+  cursor: pointer; 
+  font-size: 0.85rem; font-weight: 500;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.chip span { color: var(--muted); font-size: 0.75rem; font-weight: 400; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed='true'] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.chip[aria-pressed='true'] span { color: var(--ash-300); }
+.filter-status { margin: 0.75rem 0 1.25rem; color: var(--muted); font-size: 0.85rem; }
+.filter-empty { padding: 2rem 0; color: var(--muted); }
+.link-btn { padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 0.25em; }
+
+/* ---------- Flat minimalist overrides (keep these last) ---------- */
+.pcard, .course, .island, .exp { border: 1px solid var(--line-strong); }
+.pcard { box-shadow: none; }
+.pcard:hover { translate: none; border-color: var(--ink); box-shadow: none; }
+.exp-foot { border-top: 1px solid var(--line-strong); }
+.pcard, .course, .course-project, .pcard--compact, .pcard-logo,
+.pcard--compact .pcard-logo, .tl-card, .group { border-radius: var(--radius); }
+.island, .exp { border-radius: var(--radius); }
+.capsules { position: relative; z-index: 41; } /* keeps the year capsules visible above the hover card */
+
+/* Per aspera ad astra: repeating text around the root hexagon */
+.motto {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--R) * 1.4);
+  height: calc(var(--R) * 1.4);
+  translate: -50% -50%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  animation: motto-in 1.6s ease 0.3s forwards;
+}
+.motto text {
+  font-family: var(--font-display);
+  font-size: 8.5px; /* SVG units, so it scales with --R */
+  font-weight: 500;
+  fill: var(--muted);
+  white-space: pre;
+}
+@keyframes motto-in {
+  to {
+    opacity: 0.3;
+  }
+}
+
+/* Too small to read once the tree shrinks beside a panel, so it fades away */
+.app[data-mode='panel'] .motto {
+  animation: none;
+  opacity: 0;
+}
+@media (max-width: 900px) {
+  .motto {
+    display: none;
+  }
+}
+
