@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import App from '../components/App';
+---
+
+<Base title="Arsenie | Portfolio">
+  <App client:only="react" />
+  <noscript>
+    <p class="noscript">This portfolio needs JavaScript to show its node tree.</p>
+  </noscript>
+</Base>
