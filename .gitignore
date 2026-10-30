@@ -4,12 +4,21 @@
 # Node.js dependencies
 node_modules/
 dist/
-
 package-lock.json
 
 # Build output
 .astro/
+.venv/
+__pycache__/
+*.py[cod]
 
 # Logs
 logs/
 .DS_Store
+
+# Local Django database and collected static output
+/backend/*.sqlite3
+/backend/static-collected/
+/backend/.env
+/data/*.db
+/data/*.db-*
