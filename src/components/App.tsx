@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { courses, years } from '../data/courses';
-import { experience } from '../data/experience';
-import { site } from '../data/site';
-import { withBase } from '../lib/url';
-import { CollapseIcon, ExperienceIcon, GithubIcon, LinkedInIcon, ProjectsIcon, SkillsIcon } from './icons';
-import CoursesPanel from './panels/CoursesPanel';
-import ExperiencePanel from './panels/ExperiencePanel';
-import ProjectsPanel from './panels/ProjectsPanel';
-import SkillsPanel from './panels/SkillsPanel';
+import { usePortfolio, PortfolioProvider } from '@/data/portfolio-context';
+import type { CourseYear } from '@/types/portfolio';
+import { CollapseIcon, ExperienceIcon, GithubIcon, LinkedInIcon, ProjectsIcon, SkillsIcon } from '@/components/icons';
+import CoursesPanel from '@/components/panels/CoursesPanel';
+import ExperiencePanel from '@/components/panels/ExperiencePanel';
+import ProjectsPanel from '@/components/panels/ProjectsPanel';
+import SkillsPanel from '@/components/panels/SkillsPanel';
 import {
   HEX_IDS,
   LABELS,
@@ -19,8 +17,8 @@ import {
   type HexId,
   type NodeId,
   type YearNodeId,
-} from './tree';
-import GithubCard from './GithubCard';
+} from '@/components/tree';
+import { ExperiencePage, ProjectPage } from '@/components/ExperiencePage';
 
 const INTRO_DELAY_MS = 1000;
 const HOVER_LEAVE_MS = 160;
@@ -57,12 +55,31 @@ function MottoRing() {
 }
 
 export default function App() {
-  // `pinned` is the path of nodes the visitor has clicked open, e.g. ['root', 'grad', 'y2024'].
+  return (
+    <PortfolioProvider>
+      <PortfolioContent />
+    </PortfolioProvider>
+  );
+}
+
+function PortfolioContent() {
+  const { data, loading, error } = usePortfolio();
+  if (loading) return <p className="app-status" role="status">Loading portfolio…</p>;
+  if (error || !data) {
+    return <p className="app-status app-status--error" role="alert">Could not load portfolio: {error}</p>;
+  }
+
+  return <LoadedPortfolio data={data} />;
+}
+
+function LoadedPortfolio({ data }: { data: NonNullable<ReturnType<typeof usePortfolio>['data']> }) {
+  const { site, years, experience } = data;
+  // `pinned` is the path of nodes the visitor has clicked open, e.g. ['root', 'grad', 'y2'].
   const [pinned, setPinned] = useState<NodeId[]>([]);
   const [hovered, setHovered] = useState<NodeId | null>(null);
   const [angles, setAngles] = useState(pickAngles);
   const [side, setSide] = useState<Side>('left');
-  const [activeJob, setActiveJob] = useState(experience[0]?.id ?? '');
+  const [activeJob, setActiveJob] = useState<number | null>(experience[0]?.id ?? null);
   const leaveTimer = useRef<number | undefined>(undefined);
 
   // After X seconds the child nodes appear. `?open=skills` (used by the full-page back links) skips ahead.
@@ -88,6 +105,15 @@ export default function App() {
   const active = pinned[pinned.length - 1];
   const panel: NodeId | null = active && PANEL_NODES.has(active) ? active : null;
   const peeksEnabled = !panel;
+  const params = new URLSearchParams(window.location.search);
+  const experienceId = Number(params.get('experience') ?? window.location.pathname.match(/^\/experience\/(\d+)\/?$/)?.[1]);
+  const experiencePage = Number.isInteger(experienceId)
+    ? experience.find((entry) => entry.id === experienceId)
+    : undefined;
+  const projectId = Number(params.get('project'));
+  const projectPage = Number.isInteger(projectId)
+    ? data.projects.find((project) => project.id === projectId)
+    : undefined;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -125,7 +151,14 @@ export default function App() {
   const rootOpen = pinned.includes('root');
 
   return (
-    <div className="app" data-mode={panel ? 'panel' : 'home'} data-side={side}>
+    <div className="app" data-mode={panel || experiencePage ? 'panel' : 'home'} data-side={side}>
+      <AdminAccess />
+      {experiencePage ? (
+        <ExperiencePage job={experiencePage} entries={experience} />
+      ) : projectPage ? (
+        <ProjectPage project={projectPage} />
+      ) : (
+      <>
       <aside className="stage" aria-label="Portfolio navigation">
         {pinned.length > 0 && (
           <button type="button" className="collapse-btn" onClick={collapseAll}>
@@ -161,7 +194,7 @@ export default function App() {
                 onClick={() => toggle('root')}
               >
                 <span className="hex-in">
-                  <img src={withBase(site.avatar)} alt="Arsenie, profile picture" />
+                  {site.avatar && <img src={site.avatar} alt={`${site.name || 'Profile'} profile`} />}
                 </span>
               </button>
             </div>
@@ -208,8 +241,6 @@ export default function App() {
               );
             })}
 
-            {/* {hovered === 'projects' && <GithubCard />} */}
-            {/* {peeksEnabled && hovered === 'projects' && <GithubCard />} */}
             {peeksEnabled && <HoverCard node={hovered} />}
           </div>
 
@@ -224,14 +255,18 @@ export default function App() {
               ))}
             </p>
             <div className="contacts">
-              <a href={site.github.url} target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
-                <GithubIcon />
-                {/* <GithubCard/> */}
-              </a>
-              <a href={site.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
-                <LinkedInIcon />
-              </a>
+              {site.github.url && (
+                <a href={site.github.url} target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+                  <GithubIcon />
+                </a>
+              )}
+              {site.linkedin && (
+                <a href={site.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+                  <LinkedInIcon />
+                </a>
+              )}
             </div>
+            {(site.graduation.date || site.graduation.school || years.length > 0) && (
             <div className="grad-wrap" onMouseEnter={() => hoverIn('grad')} onMouseLeave={hoverOut}>
               <button
                 type="button"
@@ -239,7 +274,7 @@ export default function App() {
                 aria-expanded={pinned.includes('grad')}
                 onClick={() => toggle('grad')}
               >
-                🎓 {site.graduation.date} | {site.graduation.school}
+                🎓 {[site.graduation.date, site.graduation.school].filter(Boolean).join(' | ')}
               </button>
 
               <div className="capsules" data-visible={capsulesVisible}>
@@ -262,13 +297,14 @@ export default function App() {
                         aria-expanded={pinnedHere}
                         onClick={() => toggle(id)}
                       >
-                        {year}
+                        {year.replace('y', 'Year ')}
                       </button>
                     </div>
                   );
                 })}
               </div>
             </div>
+            )}
 
             
           </div>
@@ -280,29 +316,32 @@ export default function App() {
           {panel === 'projects' && <ProjectsPanel />}
           {panel === 'skills' && <SkillsPanel />}
           {panel === 'experience' && <ExperiencePanel activeId={activeJob} onSelect={setActiveJob} />}
-          {(panel === 'y2023' || panel === 'y2024' || panel === 'y2025') && (
+          {(panel === 'y1' || panel === 'y2' || panel === 'y3') && (
             <CoursesPanel year={YEAR_OF[panel]} />
           )}
         </main>
+      )}
+      </>
       )}
     </div>
   );
 }
 function HoverCard({ node }: { node: NodeId | null }) {
   switch (node) {
-    case 'y2023':
-    case 'y2024':
-    case 'y2025': return <YearPeek year={YEAR_OF[node]} />;
+    case 'y1':
+    case 'y2':
+    case 'y3': return <YearPeek year={YEAR_OF[node]} />;
     default: return null;
   }
 }
 
-function YearPeek({ year }: { year: keyof typeof courses }) {
+function YearPeek({ year }: { year: CourseYear }) {
+  const { data } = usePortfolio();
   return (
     <div className="peek">
-      <p className="peek-title">{year} courses</p>
+      <p className="peek-title">{year.replace('y', 'Year ')} courses</p>
       <ul>
-        {courses[year].map((course) => (
+        {(data?.courses[year] ?? []).map((course) => (
           <li key={course.code}>
             {course.name}
             <b>{course.code}</b>
@@ -310,5 +349,39 @@ function YearPeek({ year }: { year: keyof typeof courses }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+function AdminAccess() {
+  const [session, setSession] = useState<{ authenticated: boolean; username: string | null } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/session/')
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Session API returned HTTP ${response.status}.`);
+        return (await response.json()) as { authenticated: boolean; username: string | null };
+      })
+      .then(setSession)
+      .catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : 'Unable to check sign-in status.');
+      });
+  }, []);
+
+  return (
+    <nav className="admin-access" aria-label="Portfolio administration">
+      {session?.authenticated ? (
+        <>
+          <span>Signed in as {session.username}</span>
+          <button className="admin-button" type="button" onClick={() => window.location.reload()}>
+            Refresh content
+          </button>
+          <a className="admin-button" href="/admin/">Edit portfolio</a>
+        </>
+      ) : (
+        <a className="admin-button" href="/admin/login/?next=/admin/">Sign in to edit</a>
+      )}
+      {error && <span className="admin-error" role="status">{error}</span>}
+    </nav>
   );
 }

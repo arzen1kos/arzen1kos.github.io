@@ -1,7 +1,7 @@
-import type { Year } from '../data/types';
+import type { CourseYear } from '@/types/portfolio';
 
 export type HexId = 'projects' | 'skills' | 'experience';
-export type YearNodeId = 'y2023' | 'y2024' | 'y2025';
+export type YearNodeId = 'y1' | 'y2' | 'y3';
 export type NodeId = 'root' | HexId | 'grad' | YearNodeId;
 
 export const PARENT: Record<NodeId, NodeId | null> = {
@@ -10,9 +10,9 @@ export const PARENT: Record<NodeId, NodeId | null> = {
   skills: 'root',
   experience: 'root',
   grad: 'root',
-  y2023: 'grad',
-  y2024: 'grad',
-  y2025: 'grad',
+  y1: 'grad',
+  y2: 'grad',
+  y3: 'grad',
 };
 
 export const HEX_IDS: HexId[] = ['projects', 'skills', 'experience'];
@@ -23,11 +23,11 @@ export const LABELS: Record<HexId, string> = {
   experience: 'Experience',
 };
 
-export const YEAR_OF: Record<YearNodeId, Year> = { y2023: '2023', y2024: '2024', y2025: '2025' };
-export const NODE_OF_YEAR: Record<Year, YearNodeId> = { '2023': 'y2023', '2024': 'y2024', '2025': 'y2025' };
+export const YEAR_OF: Record<YearNodeId, CourseYear> = { y1: 'y1', y2: 'y2', y3: 'y3' };
+export const NODE_OF_YEAR: Record<CourseYear, YearNodeId> = { y1: 'y1', y2: 'y2', y3: 'y3' };
 
 /** Nodes that open a content panel when pinned. */
-export const PANEL_NODES = new Set<NodeId>(['projects', 'skills', 'experience', 'y2023', 'y2024', 'y2025']);
+export const PANEL_NODES = new Set<NodeId>(['projects', 'skills', 'experience', 'y1', 'y2', 'y3']);
 
 export function pathOf(id: NodeId): NodeId[] {
   const path: NodeId[] = [];

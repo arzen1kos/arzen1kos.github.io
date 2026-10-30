@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { projects } from '../../data/projects';
-import ProjectCard from '../ProjectCard';
+import { usePortfolio } from '@/data/portfolio-context';
+import ProjectCard from '@/components/ProjectCard';
 
 /** false: show projects that use ANY selected language. true: only projects that use ALL of them. */
 const MATCH_ALL = false;
 
 export default function ProjectsPanel() {
+  const { data } = usePortfolio();
+  const projects = data?.projects ?? [];
   const [selected, setSelected] = useState<string[]>([]);
 
   const languages = useMemo(() => {
@@ -29,7 +31,7 @@ export default function ProjectsPanel() {
     <section className="panel" aria-labelledby="projects-title">
       <header className="panel-head">
         <h2 id="projects-title">Projects</h2>
-        <p>Select a card to open its GitHub repository.</p>
+        <p>Open a project card to view its details.</p>
       </header>
 
       <div className="filters" role="group" aria-label="Filter projects by language">
@@ -51,8 +53,11 @@ export default function ProjectsPanel() {
         </div>
       ) : (
         <p className="filter-empty">
-          No project uses {MATCH_ALL ? 'all of' : 'any of'} those languages.{' '}
-          <button type="button" className="link-btn" onClick={() => setSelected([])}>Clear filters</button>
+          {projects.length === 0
+            ? 'No projects have been added yet. Sign in to add project cards.'
+            : <>No project uses {MATCH_ALL ? 'all of' : 'any of'} those languages.{' '}
+                <button type="button" className="link-btn" onClick={() => setSelected([])}>Clear filters</button>
+              </>}
         </p>
       )}
     </section>
