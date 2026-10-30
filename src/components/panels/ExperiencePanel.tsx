@@ -1,13 +1,14 @@
-import { experience } from '../../data/experience';
-import { withBase } from '../../lib/url';
-import { ArrowIcon } from '../icons';
+import { usePortfolio } from '@/data/portfolio-context';
+import { ArrowIcon } from '@/components/icons';
 
 interface Props {
-  activeId: string;
-  onSelect: (id: string) => void;
+  activeId: number | null;
+  onSelect: (id: number) => void;
 }
 
 export default function ExperiencePanel({ activeId, onSelect }: Props) {
+  const { data } = usePortfolio();
+  const experience = data?.experience ?? [];
   const active = experience.find((job) => job.id === activeId) ?? experience[0];
 
   return (
@@ -35,11 +36,14 @@ export default function ExperiencePanel({ activeId, onSelect }: Props) {
           </li>
         ))}
       </ol>
+      {experience.length === 0 && (
+        <p className="filter-empty">No experience has been added yet. Sign in to add experience cards.</p>
+      )}
 
       {active && (
         <footer className="exp-foot">
           <span className="exp-foot-title">{active.role}</span>
-          <a className="expand-link" href={withBase(`/experience/${active.id}/`)}>
+          <a className="expand-link" href={`/?experience=${active.id}`}>
             Expand
             <ArrowIcon />
           </a>

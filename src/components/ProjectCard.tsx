@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
-import type { Project } from '../data/types';
-import { withBase } from '../lib/url';
-import { ArrowIcon } from './icons';
+import type { Project } from '@/types/portfolio';
+import { ArrowIcon } from '@/components/icons';
 
 function initials(name: string): string {
   return name
@@ -30,13 +29,13 @@ export default function ProjectCard({ project, compact = false }: Props) {
   return (
     <article className={compact ? 'pcard pcard--compact' : 'pcard'}>
       <div className="pcard-logo" style={logoStyle}>
-        {project.logo ? <img src={withBase(project.logo)} alt="" /> : <span>{initials(project.name)}</span>}
+        {project.logo ? <img src={project.logo} alt="" /> : <span>{initials(project.name)}</span>}
       </div>
       <div className="pcard-body">
         <h3 className="pcard-name">
-          <a className="pcard-link" href={project.repo} target="_blank" rel="noopener noreferrer">
+          <a className="pcard-link" href={`/?project=${project.id}`}>
             {project.name}
-            <span className="sr-only"> (GitHub repository)</span>
+            <span className="sr-only"> (project details)</span>
           </a>
         </h3>
         <p className="pcard-desc">{project.description}</p>
@@ -49,6 +48,16 @@ export default function ProjectCard({ project, compact = false }: Props) {
           <a className="pcard-btn" href={project.url} target="_blank" rel="noopener noreferrer">
             See Project
             <ArrowIcon />
+          </a>
+        )}
+        {project.githubAvailable && project.repo && (
+          <a
+            className="pcard-btn pcard-btn--github"
+            href={project.repo}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
           </a>
         )}
       </div>

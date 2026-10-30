@@ -1,13 +1,12 @@
 ---
-import '../styles/global.css';
+import '@/styles/global.css';
 
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = 'Portfolio of Arsenie: AI engineering, SOC and QA.' } = Astro.props;
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const { title, description = 'Portfolio' } = Astro.props;
 ---
 
 <!doctype html>
@@ -17,7 +16,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#e9eee9" />
-    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

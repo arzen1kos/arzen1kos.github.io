@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { softSkills, techSkills } from '../../data/skills';
+import { usePortfolio } from '@/data/portfolio-context';
 
 const SOFT_DELAY_MS = 3000;
 
 export default function SkillsPanel() {
+  const { data } = usePortfolio();
+  const techSkills = data?.techSkills ?? [];
+  const softSkills = data?.softSkills ?? [];
   const [showSoft, setShowSoft] = useState(false);
   const softRef = useRef<HTMLElement | null>(null);
 
@@ -52,13 +55,16 @@ export default function SkillsPanel() {
           </header>
           <ul className="soft-grid">
             {softSkills.map((skill) => (
-              <li key={skill.title}>
+                <li key={skill.id}>
                 <h3>{skill.title}</h3>
                 <p>{skill.blurb}</p>
               </li>
             ))}
           </ul>
         </section>
+      )}
+      {techSkills.length === 0 && softSkills.length === 0 && (
+        <p className="filter-empty">No skills have been added yet. Sign in to add skills.</p>
       )}
     </div>
   );
