@@ -12,9 +12,12 @@
   },
   "dependencies": {
     "@astrojs/react": "latest",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
     "astro": "latest",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@astrojs/check": "latest",
