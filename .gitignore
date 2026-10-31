@@ -27,3 +27,6 @@ logs/
 /backend/.env
 /data/*.db
 /data/*.db-*
+
+# Local Netlify folder
+.netlify

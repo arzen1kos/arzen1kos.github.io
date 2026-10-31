@@ -12,6 +12,7 @@
     "db:setup": "node scripts/setup-db.mjs"
   },
   "dependencies": {
+    "@astrojs/netlify": "^8.2.10",
     "@astrojs/node": "^11.1.9",
     "@astrojs/react": "latest",
     "@react-three/drei": "^10.7.9",
@@ -29,6 +30,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.187.0",
+    "netlify-cli": "^27.16.1",
     "typescript": "^5.6.0"
   }
 }

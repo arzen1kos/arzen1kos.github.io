@@ -2,7 +2,7 @@
 import Base from '@/layouts/Base.astro';
 import { getExperience } from '@/lib/portfolio';
 import { formatMonth } from '@/lib/format';
-// export const prerender = false;
+export const prerender = false;
 
 const id = Number(Astro.params.id);
 const item = Number.isInteger(id) ? getExperience(id) : null;

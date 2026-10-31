@@ -3,10 +3,12 @@ import { defineConfig, envField } from 'astro/config';
 import react from '@astrojs/react';
 import { fileURLToPath } from 'node:url';
 // import node from '@astrojs/node';
+import netlify from '@astrojs/netlify';
 
 export default defineConfig({
   // output: 'server',
   // adapter: node({ mode: 'standalone' }),
+  adapter: netlify(),
   site: 'https://arzen1kos.github.io',
   integrations: [react()],
   vite: {
