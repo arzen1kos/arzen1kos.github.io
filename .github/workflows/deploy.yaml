@@ -27,11 +27,11 @@ jobs:
           node-version: 24.22.1 # The specific version of Node that should be used to build your site. Defaults to 24. (optional)
           package-manager: npm@latest # The Node package manager that should be used to install dependencies and build your site. Automatically detected based on your lockfile. (optional)
           build-cmd: npm run build # The command to run to build your site. Runs the package build script/task by default. (optional)
-        env:
-          GITHUB_TOKENS: ${{ secrets.GH_TOKENS }}
-          GITHUB_TOKEN_PERSONAL: ${{ secrets.GH_TOKEN_PERSONAL }}
-          GITHUB_TOKEN_WORK: ${{ secrets.GH_TOKEN_WORK }}
-          PORTFOLIO_DB_PATH: "./backend/db/portfolio.db"
+    env:
+      GITHUB_TOKENS: ${{ secrets.GH_TOKENS }}
+      GITHUB_TOKEN_PERSONAL: ${{ secrets.GH_TOKEN_PERSONAL }}
+      GITHUB_TOKEN_WORK: ${{ secrets.GH_TOKEN_WORK }}
+      PORTFOLIO_DB_PATH: "./backend/db/portfolio.db"
 
   deploy:
     needs: build
