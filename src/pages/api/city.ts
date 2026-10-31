@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { getRepos } from '@/lib/github';
 import { getPortfolio } from '@/lib/portfolio';
 
-export const prerender = false;
+// export const prerender = false;
 
 export const GET: APIRoute = async () => {
   try {
