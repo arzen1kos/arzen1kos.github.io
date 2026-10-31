@@ -3,7 +3,7 @@ import { Html, OrbitControls } from '@react-three/drei';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { citySlots, TOWER_RADIUS } from './layout';
-import { ISLAND, MAX_PEAK, PEAKS, terrainHeight } from './terrain';
+import { ISLAND, MAX_PEAK, MOUNTAIN, OCT_CUT, PEAKS, octagonPoints, terrainHeight } from './terrain';
 import type { PeakKey, Repo } from './types';
 
 /* ------------------------------------------------------------------ */
@@ -11,7 +11,7 @@ import type { PeakKey, Repo } from './types';
 /* ------------------------------------------------------------------ */
 
 const BLUE = { line: '#7fd8ff', slab: '#0b2a52', deep: '#12315e', mid: '#1f64b0', snow: '#d6f1ff', amber: '#ffd166' };
-const TARGET = new THREE.Vector3(0, 2, -6);
+const TARGET = new THREE.Vector3(-7, 2, 0); // x offset leaves room for the panel; the mountain is at the island centre
 const FIT = 0.78; // share of screen width the island spans at launch
 
 const HEX = (() => {
@@ -82,19 +82,32 @@ function Rig() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Island slab + blueprint grid                                        */
+/* Octagonal island slab + blueprint grid (clipped to the octagon)     */
 /* ------------------------------------------------------------------ */
+
+const SLAB_THICKNESS = 0.8;
 
 function Island() {
   const parts = useMemo(() => {
-    const cz = (ISLAND.zMin + ISLAND.zMax) / 2;
-    const slab = new THREE.BoxGeometry(ISLAND.w, 0, ISLAND.d);
-    slab.translate(0, -0.4, cz);
+    // Slab: extrude the octagon outline. Shape space is (x, −z) so that after rotateX(−90°) it lands on (x, z).
+    const outline = octagonPoints();
+    const shape = new THREE.Shape(outline.map(([x, z]) => new THREE.Vector2(x, -z)));
+    const slab = new THREE.ExtrudeGeometry(shape, { depth: SLAB_THICKNESS, bevelEnabled: false });
+    slab.rotateX(-Math.PI / 2);
+    slab.translate(0, -SLAB_THICKNESS, 0); // top face sits at y = 0
     const edges = new THREE.EdgesGeometry(slab);
 
+    // Grid lines every 4 units, each trimmed to where it crosses the octagon.
+    const A = ISLAND.w / 2, B = ISLAND.d / 2, limit = 1 + OCT_CUT;
     const pts: number[] = [];
-    for (let x = -ISLAND.w / 2; x <= ISLAND.w / 2 + 0.01; x += 4) pts.push(x, 0.03, ISLAND.zMin, x, 0.03, ISLAND.zMax);
-    for (let z = ISLAND.zMin; z <= ISLAND.zMax + 0.01; z += 4) pts.push(-ISLAND.w / 2, 0.03, z, ISLAND.w / 2, 0.03, z);
+    for (let x = -A; x <= A + 0.01; x += 4) {
+      const reach = B * Math.min(1, limit - Math.abs(x) / A);
+      if (reach > 0) pts.push(x, 0.03, ISLAND.cz - reach, x, 0.03, ISLAND.cz + reach);
+    }
+    for (let z = ISLAND.zMin; z <= ISLAND.zMax + 0.01; z += 4) {
+      const reach = A * Math.min(1, limit - Math.abs(z - ISLAND.cz) / B);
+      if (reach > 0) pts.push(-reach, 0.03, z, reach, 0.03, z);
+    }
     const grid = new THREE.BufferGeometry();
     grid.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
     return { slab, edges, grid };
@@ -107,7 +120,7 @@ function Island() {
       <mesh geometry={parts.slab} onPointerOver={swallow} onClick={swallow}>
         <meshBasicMaterial color={BLUE.slab} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
       </mesh>
-      <lineSegments geometry={parts.edges}><lineBasicMaterial color={BLUE.line} transparent opacity={0} /></lineSegments>
+      <lineSegments geometry={parts.edges}><lineBasicMaterial color={BLUE.line} transparent opacity={0.9} /></lineSegments>
       <lineSegments geometry={parts.grid}><lineBasicMaterial color={BLUE.line} transparent opacity={0.2} /></lineSegments>
     </group>
   );
@@ -124,9 +137,10 @@ const hash2 = (x: number, z: number) => {
 };
 
 function buildMountain() {
-  const cols = 52, rows = 18;
-  const x0 = -ISLAND.w / 2, z0 = ISLAND.zMin, z1 = 3;
-  const cw = ISLAND.w / cols, ch = (z1 - z0) / rows;
+  // Grid only covers the mountain footprint (plus a margin); terrainHeight() is zero outside the foot line.
+  const cols = 40, rows = 34;
+  const x0 = -MOUNTAIN.rx * 1.14, z0 = -MOUNTAIN.rz * 1.14, z1 = MOUNTAIN.rz * 1.14;
+  const cw = (-x0 * 2) / cols, ch = (z1 - z0) / rows;
   const n = cols + 1;
   const gx = new Float32Array(n * (rows + 1));
   const gy = new Float32Array(n * (rows + 1));
@@ -175,8 +189,11 @@ function buildMountain() {
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   const creases = new THREE.EdgesGeometry(geometry, 5);
 
-  // Dashed trail linking the three peaks, grounded on the terrain.
-  const ctrl = [PEAKS[0]!, { x: -11, z: -15 }, PEAKS[1]!, { x: 11, z: -15 }, PEAKS[2]!].map((p) => new THREE.Vector3(p.x, 0, p.z));
+  // Dashed trail linking the three peaks, grounded on the terrain. Saddle points sit midway between peaks.
+  const middle = (a: (typeof PEAKS)[number], b: (typeof PEAKS)[number]) => ({ x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 });
+  const mid1 = middle(PEAKS[0]!, PEAKS[1]!);
+  const mid2 = middle(PEAKS[1]!, PEAKS[2]!);
+  const ctrl = [PEAKS[0]!, mid1, PEAKS[1]!, mid2, PEAKS[2]!].map((p) => new THREE.Vector3(p.x, 0, p.z));
   const curve = new THREE.CatmullRomCurve3(ctrl, false, 'centripetal');
   const trailPts = curve.getPoints(110).map((p) => new THREE.Vector3(p.x, terrainHeight(p.x, p.z) + 0.55, p.z));
   const trail = new THREE.BufferGeometry().setFromPoints(trailPts);
