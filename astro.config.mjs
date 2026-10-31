@@ -1,12 +1,12 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 import react from '@astrojs/react';
 import { fileURLToPath } from 'node:url';
-import node from '@astrojs/node';
+// import node from '@astrojs/node';
 
 export default defineConfig({
-  output: 'server',
-  adapter: node({ mode: 'standalone' }),
+  // output: 'server',
+  // adapter: node({ mode: 'standalone' }),
   integrations: [react()],
   vite: {
     resolve: {
@@ -26,4 +26,18 @@ export default defineConfig({
   build: {
     assetsPrefix: '/static',
   },
+  // env: {
+  //   schema: {
+  //     // Never bundled into client OR server output
+  //     API_SECRET: envField.string({
+  //       context: 'server',
+  //       access: 'secret',
+  //     }),
+  //     // Baked in at build time, visible to client
+  //     PUBLIC_API_URL: envField.string({
+  //       context: 'client',
+  //       access: 'public',
+  //     }),
+  //   },
+  // },
 });
