@@ -1,10 +1,12 @@
 import json
+import os
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Course, Experience, Profile, Project, Skill, SkillCategory
+from .models import Course, Experience, ExperienceMountain, Profile, Project, Skill, SkillCategory
 
 
 class PortfolioApiTests(TestCase):
@@ -63,6 +65,57 @@ class PortfolioApiTests(TestCase):
     def test_content_endpoint_is_read_only(self):
         response = self.client.post(reverse('portfolio-api'), data=json.dumps({}), content_type='application/json')
         self.assertEqual(response.status_code, 405)
+
+    def test_city_api_serializes_database_content_and_procedural_terrain(self):
+        mountain = ExperienceMountain.objects.get(name='Port Hills')
+        Experience.objects.create(
+            mountain=mountain,
+            role='Developer',
+            company='Example',
+            start_year=2024,
+            description='Built an application.\nImproved reliability.',
+        )
+
+        with patch.dict(os.environ, {'GOOGLE_MAPS_API_KEY': ''}):
+            response = self.client.get(reverse('city-api'))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['portfolio']['islands']), 3)
+        self.assertEqual(data['terrain']['source'], 'procedural')
+        self.assertEqual(data['terrain']['center'], [-43.55, 172.66])
+        entry = data['portfolio']['experienceMountains'][0]['entries'][0]
+        self.assertEqual(entry['title'], 'Developer')
+        self.assertEqual(entry['organisation'], 'Example')
+        self.assertEqual(entry['details'], ['Built an application.', 'Improved reliability.'])
+        self.assertEqual(entry['descriptionText'], 'Built an application.\nImproved reliability.')
+
+    def test_admin_experience_defaults_to_the_configured_trail(self):
+        get_user_model().objects.create_superuser(username='editor', password='test-password')
+        self.assertTrue(self.client.login(username='editor', password='test-password'))
+
+        response = self.client.post(
+            reverse('admin:portfolio_experience_add'),
+            {
+                'role': 'Developer',
+                'company': 'Example',
+                'start_year': '2025',
+                'start_month': '1',
+                'end_year': '',
+                'end_month': '',
+                'location': '',
+                'description': 'A portfolio entry.',
+                'highlights': '[]',
+                'tags': '[]',
+                'mountain': '',
+                'position': '0',
+                '_save': 'Save',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        experience = Experience.objects.get(role='Developer')
+        self.assertEqual(experience.mountain.name, 'Port Hills')
 
     def test_session_api_and_authenticated_admin_crud(self):
         anonymous = self.client.get(reverse('session-api')).json()

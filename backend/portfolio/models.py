@@ -67,6 +67,7 @@ class Skill(models.Model):
     category = models.ForeignKey(SkillCategory, related_name='skills', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    icon_url = models.URLField(blank=True)
     position = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -148,10 +149,21 @@ class Course(models.Model):
 
 
 class Experience(models.Model):
+    mountain = models.ForeignKey(
+        'ExperienceMountain',
+        related_name='experiences',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     role = models.CharField(max_length=160)
     company = models.CharField(max_length=160)
     start_year = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1900), MaxValueValidator(2200)]
+    )
+    start_month = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
     )
     end_year = models.PositiveSmallIntegerField(
         null=True,
@@ -159,7 +171,19 @@ class Experience(models.Model):
         validators=[MinValueValidator(1900), MaxValueValidator(2200)],
         help_text='Leave blank for a current role.',
     )
+    end_month = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
+    )
+    location = models.CharField(max_length=160, blank=True)
     description = models.TextField(blank=True)
+    highlights = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='JSON list of experience highlights.',
+        validators=[validate_string_list],
+    )
     tags = models.JSONField(
         default=list,
         blank=True,
@@ -177,3 +201,68 @@ class Experience(models.Model):
 
     def __str__(self):
         return f'{self.role} — {self.company}'
+
+
+class ExperienceMountain(models.Model):
+    name = models.CharField(max_length=120)
+    subtitle = models.CharField(max_length=240, blank=True)
+    angle_degrees = models.FloatField(default=35)
+    distance = models.FloatField(default=0, help_text='World-space distance from the city center.')
+    radius = models.FloatField(default=11, validators=[MinValueValidator(1)])
+    height = models.FloatField(default=10, validators=[MinValueValidator(1)])
+    seed = models.PositiveIntegerField(default=17)
+    color = models.CharField(max_length=20, default='#17665b')
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ('position', 'name')
+
+    def __str__(self):
+        return self.name
+
+
+class CityIsland(models.Model):
+    class Kind(models.TextChoices):
+        PROJECTS = 'projects', 'Projects'
+        COURSES = 'courses', 'Courses'
+        EXPERIENCE = 'experience', 'Experience'
+
+    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=100)
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    subtitle = models.CharField(max_length=240, blank=True)
+    x = models.FloatField(default=0)
+    y = models.FloatField(default=0)
+    z = models.FloatField(default=0)
+    grid_rings = models.PositiveSmallIntegerField(default=1)
+    scale = models.FloatField(default=1, validators=[MinValueValidator(0.1)])
+    rotation_speed = models.FloatField(default=0.45)
+    color = models.CharField(max_length=20, default='#2dd4bf')
+    position = models.PositiveIntegerField(default=0)
+    enabled = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ('position', 'name')
+
+    def __str__(self):
+        return self.name
+
+
+class CityTerrain(models.Model):
+    center_latitude = models.FloatField(default=-43.55)
+    center_longitude = models.FloatField(default=172.66)
+    radius_km = models.FloatField(default=18, validators=[MinValueValidator(1)])
+    samples_per_side = models.PositiveSmallIntegerField(
+        default=21,
+        validators=[MinValueValidator(3), MaxValueValidator(21)],
+        help_text='Google Elevation API permits at most 512 points per request.',
+    )
+    elevation_grid = models.JSONField(default=list, blank=True)
+    elevations_updated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'city terrain settings'
+        verbose_name_plural = 'city terrain settings'
+
+    def __str__(self):
+        return 'Christchurch terrain'

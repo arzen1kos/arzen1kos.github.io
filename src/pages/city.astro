@@ -1,19 +1,16 @@
 ---
-// Example page: src/pages/city.astro
-// Requires @astrojs/react in astro.config.mjs.
-import ContributionCity from '@components/city/ContributionCity';
-// import ContributionCity from '@components/ContributionCity/ContributionCity';
-import { loadCityRepos } from '../lib/github-repos';
+import ContributionCity from '@/components/contribution-city/ContributionCity';
+import { loadCityRepos } from '@/lib/github-repos';
 
-// Runs at build time (or per request in SSR). Tokens stay on the server.
-const { repos, demo } = await loadCityRepos();
-
+// All of this runs on the server (build time, or per request in SSR). Tokens never reach the browser.
+const { repos, tokenMissing, errors } = await loadCityRepos();
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>Contribution City</title>
     <style>
       body { margin: 0; padding: 24px; background: #061a19; }
@@ -21,7 +18,9 @@ const { repos, demo } = await loadCityRepos();
     </style>
   </head>
   <body>
-    {demo && <p class="note">Showing sample data. Set GITHUB_TOKENS in .env to load your repositories.</p>}
-    <ContributionCity client:only="react" repos={repos} height="80vh" />
+    {tokenMissing && <p class="note">Repository data is empty until GITHUB_TOKENS is configured.</p>}
+    {errors.map((error) => <p class="note">{error}</p>)}
+    <!-- client:only: the 3D canvas needs a browser, so skip SSR for it -->
+    <ContributionCity client:only="react" repos={repos} height="85vh" />
   </body>
 </html>

@@ -1,17 +1,5 @@
-import type { CityRepo } from './types';
+import type { CityRepo } from '@/components/contribution-city/types';
 
-interface Totals {
-  repos: number;
-  commits: number;
-  accounts: string[];
-}
-
-interface Props {
-  repo: CityRepo | null;
-  totals: Totals;
-}
-
-const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const full = new Intl.NumberFormat('en');
 
 function formatDate(iso: string | null): string | null {
@@ -19,28 +7,15 @@ function formatDate(iso: string | null): string | null {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export function InfoPanel({ repo, totals }: Props) {
-  if (!repo) {
-    return (
-      <div className="cc-panel">
-        <div className="cc-eyebrow">Contribution City</div>
-        <div className="cc-big">{compact.format(totals.commits)}</div>
-        <div className="cc-sub">commits across {totals.repos} repositories</div>
-        <div className="cc-meta">
-          {totals.accounts.length} account{totals.accounts.length === 1 ? '' : 's'}
-        </div>
-        <div className="cc-hint">Hover a tower for details. Click to open the repo.</div>
-      </div>
-    );
-  }
-
+/** Details of the skyscraper under the cursor, shown below the profile card. */
+export function InfoPanel({ repo }: { repo: CityRepo }) {
   const pushed = formatDate(repo.pushedAt);
   const langs = repo.languages.slice(0, 5);
 
   return (
-    <div className="cc-panel">
+    <div className="cc-panel cc-repo-detail">
       <div className="cc-eyebrow">@{repo.account}</div>
-      <div className="cc-name">{repo.name}</div>
+      <div className="cc-repo-name">{repo.name}</div>
 
       <div className="cc-badges">
         {repo.isPrivate && <span className="cc-badge">Private</span>}

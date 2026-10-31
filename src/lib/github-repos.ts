@@ -8,7 +8,7 @@
  *   GITHUB_REDACT_PRIVATE  "false" to show private repo names/descriptions/links
  *                          (default: true, so a public site doesn't leak them)
  */
-import type { CityRepo, RepoLanguage } from '@/components/city/types';
+import type { CityRepo, RepoLanguage } from '@/components/contribution-city/types';
 
 const QUERY = /* GraphQL */ `
   query ($after: String, $isFork: Boolean) {
@@ -81,8 +81,7 @@ export interface LoadOptions {
 
 export interface LoadResult {
   repos: CityRepo[];
-  /** true when no token was configured and sample data was returned */
-  demo: boolean;
+  tokenMissing: boolean;
   errors: string[];
 }
 
@@ -147,7 +146,7 @@ export async function loadCityRepos(opts: LoadOptions = {}): Promise<LoadResult>
   const includeForks = opts.includeForks ?? env.GITHUB_INCLUDE_FORKS === 'true';
   const redactPrivate = opts.redactPrivate ?? env.GITHUB_REDACT_PRIVATE !== 'false';
 
-  if (tokens.length === 0) return { repos: demoRepos(), demo: true, errors: [] };
+  if (tokens.length === 0) return { repos: [], tokenMissing: true, errors: [] };
 
   const errors: string[] = [];
   const results = await Promise.all(
@@ -165,47 +164,5 @@ export async function loadCityRepos(opts: LoadOptions = {}): Promise<LoadResult>
   const seen = new Set<string>();
   const repos = results.flat().filter((r) => !seen.has(r.id) && !!seen.add(r.id));
   for (const e of errors) console.warn(`[contribution-city] ${e}`);
-  return { repos, demo: false, errors };
-}
-
-/** Deterministic sample data so the city renders before any token is configured. */
-function demoRepos(): CityRepo[] {
-  let seed = 42;
-  const rnd = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32;
-  const langs: [string, string][] = [
-    ['TypeScript', '#3178c6'],
-    ['OCaml', '#ef7a08'],
-    ['C#', '#178600'],
-    ['Python', '#3572A5'],
-    ['JavaScript', '#f1e05a'],
-    ['C++', '#f34b7d'],
-  ];
-  const accounts = ['you', 'your-other-account'];
-
-  return Array.from({ length: 48 }, (_, i) => {
-    const a = langs[Math.floor(rnd() * langs.length)];
-    const b = langs[Math.floor(rnd() * langs.length)];
-    const main = 55 + Math.floor(rnd() * 40);
-    const languages: RepoLanguage[] =
-      a[0] === b[0]
-        ? [{ name: a[0], color: a[1], percent: 100 }]
-        : [
-            { name: a[0], color: a[1], percent: main },
-            { name: b[0], color: b[1], percent: 100 - main },
-          ];
-    return {
-      id: `demo-${i}`,
-      account: accounts[i % accounts.length],
-      name: `sample-repo-${i + 1}`,
-      description: 'Sample data. Add GITHUB_TOKENS to .env to see your real repositories.',
-      url: 'https://github.com',
-      isPrivate: i % 7 === 3,
-      isArchived: i % 9 === 5,
-      isFork: false,
-      redacted: false,
-      commits: Math.floor(rnd() ** 3 * 600) + 1,
-      pushedAt: new Date(Date.now() - Math.floor(rnd() * 400) * 86_400_000).toISOString(),
-      languages,
-    };
-  });
+  return { repos, tokenMissing: false, errors };
 }
