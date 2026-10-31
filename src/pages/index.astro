@@ -3,6 +3,6 @@ import Base from '@/layouts/Base.astro';
 import ContributionCity from '@/components/contribution-city/ContributionCity';
 export const prerender = false;
 ---
-<Base title="Arzenikos | Portfoliio">
-  <ContributionCity client:only="react" />
+<Base title="Contribution City">
+  <ContributionCity client:load />
 </Base>
