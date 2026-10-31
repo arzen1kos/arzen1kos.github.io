@@ -1,4 +1,4 @@
-# Portfolio
+# ARZENIKOS.io
 
 Astro + React + TypeScript frontend with a Django backend and SQLite database.
 Portfolio content is stored only in the local database; a fresh clone starts
