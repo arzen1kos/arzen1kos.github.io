@@ -53,6 +53,7 @@ export function getPortfolio(repos: Repo[]): Portfolio {
     const manual = p.languages.split(',').map((s) => s.trim()).filter(Boolean);
     const detected = repo?.languages.slice(0, 3).map((l) => l.name) ?? [];
     return {
+      repoFullName: p.repo_full_name,
       id: p.id,
       displayName: p.display_name,                       // your custom name, not the repo name
       description: p.description || repo?.description || '',

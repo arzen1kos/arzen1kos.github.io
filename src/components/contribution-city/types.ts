@@ -35,6 +35,7 @@ export interface SoftSkill { name: string; description: string }
 
 export interface ProjectItem {
   id: number;
+  repoFullName: string | null;
   displayName: string;
   description: string;
   languages: string[];

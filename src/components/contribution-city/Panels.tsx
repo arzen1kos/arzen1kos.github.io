@@ -219,43 +219,94 @@ function ExperiencePanel({ portfolio }: { portfolio: Portfolio }) {
 
 /* ---------- projects ---------- */
 
+/* ---------- projects ---------- */
+
 const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
-function ProjectsPanel({ portfolio }: { portfolio: Portfolio }) {
+/** false = every GitHub repo gets a card. true = only repos you have given a project row. */
+const ONLY_RENAMED = false;
+
+interface ProjectCard {
+  key: string;
+  name: string;
+  description: string;
+  languages: string[];
+  color: string;
+  url: string | null;
+}
+
+function ProjectsPanel({ portfolio, repos }: { portfolio: Portfolio; repos: Repo[] }) {
   const [lang, setLang] = useState<string | null>(null);
-  const projects = portfolio.projects;
+
+  const cards = useMemo<ProjectCard[]>(() => {
+    const byName = new Map(repos.map((r) => [r.fullName.toLowerCase(), r]));
+    const claimed = new Set<string>();
+    const out: ProjectCard[] = [];
+
+    // 1. Your project rows, in your sort order. Linked ones take their data from the GitHub repo.
+    for (const p of portfolio.projects) {
+      const repo = p.repoFullName ? byName.get(p.repoFullName.toLowerCase()) : undefined;
+      if (repo) claimed.add(repo.id);
+      out.push({
+        key: `p-${p.id}`,
+        name: p.displayName,                                            // your custom name
+        description: p.description || repo?.description || '',
+        languages: p.languages.length ? p.languages : (repo?.languages.slice(0, 3).map((l) => l.name) ?? []),
+        color: p.color,
+        url: repo ? (repo.isPrivate ? null : repo.url) : p.url,
+      });
+    }
+
+    // 2. Every other repo, most active first, under its GitHub name.
+    if (!ONLY_RENAMED) {
+      [...repos]
+        .filter((r) => !claimed.has(r.id))
+        .sort((a, b) => b.commits - a.commits)
+        .forEach((r) => out.push({
+          key: `r-${r.id}`,
+          name: r.name,
+          description: r.description ?? '',
+          languages: r.languages.slice(0, 3).map((l) => l.name),
+          color: r.languages[0]?.color ?? '#2e7d32',
+          url: r.isPrivate ? null : r.url,
+        }));
+    }
+    return out;
+  }, [portfolio.projects, repos]);
+
   const langs = useMemo(() => {
     const counts = new Map<string, number>();
-    projects.forEach((p) => p.languages.forEach((l) => counts.set(l, (counts.get(l) ?? 0) + 1)));
+    cards.forEach((c) => c.languages.forEach((l) => counts.set(l, (counts.get(l) ?? 0) + 1)));
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [projects]);
-  const shown = lang ? projects.filter((p) => p.languages.includes(lang)) : projects;
+  }, [cards]);
+
+  const shown = lang ? cards.filter((c) => c.languages.includes(lang)) : cards;
 
   return (
     <Shell id="projects">
       <h1 className="cc-title">Projects</h1>
       <p className="cc-lead">Select a card to open its GitHub repository.</p>
       <div className="cc-chips" role="group" aria-label="Filter by language">
-        <button type="button" className={lang === null ? 'is-on' : ''} onClick={() => setLang(null)}>All <small>{projects.length}</small></button>
+        <button type="button" className={lang === null ? 'is-on' : ''} onClick={() => setLang(null)}>All <small>{cards.length}</small></button>
         {langs.map(([l, n]) => (
           <button key={l} type="button" className={lang === l ? 'is-on' : ''} onClick={() => setLang(l)}>{l} <small>{n}</small></button>
         ))}
       </div>
-      <p className="cc-muted">Showing {shown.length} of {projects.length}</p>
+      <p className="cc-muted">Showing {shown.length} of {cards.length}</p>
       <div className="cc-cards">
-        {shown.map((p) => {
+        {shown.map((c) => {
           const inner = (
             <>
-              <span className="cc-badge" style={{ background: p.color }}>{initials(p.displayName)}</span>
-              <h2>{p.displayName}</h2>
-              <p>{p.description}</p>
-              <ul>{p.languages.map((l) => <li key={l}>{l}</li>)}</ul>
-              {p.url && <span className="cc-btn">See Project <span aria-hidden>↗</span></span>}
+              <span className="cc-badge" style={{ background: c.color }}>{initials(c.name)}</span>
+              <h2>{c.name}</h2>
+              <p>{c.description}</p>
+              <ul>{c.languages.map((l) => <li key={l}>{l}</li>)}</ul>
+              {/* {c.url && <span className="cc-btn">See Project <span aria-hidden>↗</span></span>} */}
             </>
           );
-          return p.url
-            ? <a key={p.id} className="cc-card" href={p.url} target="_blank" rel="noreferrer">{inner}</a>
-            : <div key={p.id} className="cc-card">{inner}</div>;
+          return c.url
+            ? <a key={c.key} className="cc-card" href={c.url} target="_blank" rel="noreferrer">{inner}</a>
+            : <div key={c.key} className="cc-card">{inner}</div>;
         })}
       </div>
     </Shell>
@@ -275,7 +326,8 @@ export function Panel({ state, portfolio, repos, tokenMissing, onSelectPeak }: {
     case 'repo': return <RepoPanel key={state.repo.id} repo={state.repo} />;
     case 'skills': return <SkillsPanel portfolio={portfolio} />;
     case 'experience': return <ExperiencePanel portfolio={portfolio} />;
-    case 'projects': return <ProjectsPanel portfolio={portfolio} />;
+    case 'projects': return <ProjectsPanel portfolio={portfolio} repos={repos} />;
+    // case 'projects': return <ProjectsPanel portfolio={portfolio} />;
     default: return <DefaultPanel portfolio={portfolio} repos={repos} tokenMissing={tokenMissing} onSelectPeak={onSelectPeak} />;
   }
 }
