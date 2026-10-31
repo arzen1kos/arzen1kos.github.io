@@ -47,7 +47,7 @@ export default function ContributionCity() {
 
   return (
     <div className="cc-root" onPointerDownCapture={(e) => { downAt.current = { x: e.clientX, y: e.clientY }; }}>
-      <div className="cc-honeycomb" aria-hidden="true" />
+      {/* <div className="cc-honeycomb" aria-hidden="true" /> */}
       <div className="cc-canvas">
         {data && (
           <CityScene

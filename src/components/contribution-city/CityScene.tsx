@@ -88,7 +88,7 @@ function Rig() {
 function Island() {
   const parts = useMemo(() => {
     const cz = (ISLAND.zMin + ISLAND.zMax) / 2;
-    const slab = new THREE.BoxGeometry(ISLAND.w, 0.8, ISLAND.d);
+    const slab = new THREE.BoxGeometry(ISLAND.w, 0, ISLAND.d);
     slab.translate(0, -0.4, cz);
     const edges = new THREE.EdgesGeometry(slab);
 
@@ -107,7 +107,7 @@ function Island() {
       <mesh geometry={parts.slab} onPointerOver={swallow} onClick={swallow}>
         <meshBasicMaterial color={BLUE.slab} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
       </mesh>
-      <lineSegments geometry={parts.edges}><lineBasicMaterial color={BLUE.line} transparent opacity={0.9} /></lineSegments>
+      <lineSegments geometry={parts.edges}><lineBasicMaterial color={BLUE.line} transparent opacity={0} /></lineSegments>
       <lineSegments geometry={parts.grid}><lineBasicMaterial color={BLUE.line} transparent opacity={0.2} /></lineSegments>
     </group>
   );

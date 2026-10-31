@@ -1,6 +1,6 @@
 import { ISLAND, terrainHeight } from './terrain';
 
-export const TOWER_RADIUS = 0.8;
+export const TOWER_RADIUS = 1.8;
 const GAP = 1.18;
 
 const hash = (a: number, b: number) => {

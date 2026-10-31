@@ -64,7 +64,7 @@ function LockLink() {
   return (
     <a className="cc-lock" href={ADMIN_URL} aria-label="Edit portfolio content" rel="noreferrer">
       <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-        <rect x="3" y="7" width="10" height="7" fill="currentColor" />
+        <rect x="3" y="7" width="10" height="7" fill="#f3f3fd"/>
         <path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" strokeWidth="1.6" />
       </svg>
     </a>
@@ -115,13 +115,13 @@ function DefaultPanel({ portfolio, repos, tokenMissing, onSelectPeak }: {
   return (
     <Shell id="default">
       <h1 className="cc-title">{portfolio.profile.name}<LockLink /></h1>
-      <nav className="cc-peak-nav" aria-label="Portfolio categories">
+      {/* <nav className="cc-peak-nav" aria-label="Portfolio categories">
         {(['skills', 'experience', 'projects'] as const).map((key) => (
           <button key={key} type="button" onClick={() => onSelectPeak(key)}>
             {key === 'skills' ? 'Skills' : key === 'experience' ? 'Experience' : 'Projects'}
           </button>
         ))}
-      </nav>
+      </nav> */}
       {portfolio.profile.headline && <p className="cc-lead">{portfolio.profile.headline}</p>}
       {portfolio.profile.bio && <p className="cc-body">{portfolio.profile.bio}</p>}
       <p className="cc-big">{formatNumber(stats.commits)}<span> commits across {repos.length} repositories</span></p>
@@ -134,8 +134,6 @@ function DefaultPanel({ portfolio, repos, tokenMissing, onSelectPeak }: {
       <ul className="cc-langlist">
         {stats.top.map(([name, v]) => <li key={name}><i style={{ background: v.color ?? '#8aa0b4' }} />{name}<span>{v.n} repos</span></li>)}
       </ul>
-      <h2 className="cc-h2">Reading the city</h2>
-      <p className="cc-body">Each tower is a repository, taller with more commits. Faded towers are private and dimmed towers are archived. Hover a tower to inspect it, click to pin it. The floating hexagons on the peaks open skills, experience and projects.</p>
       {tokenMissing && <p className="cc-note">No GitHub tokens are configured. Add GITHUB_TOKEN_* values to the server environment to load repositories.</p>}
       {!tokenMissing && repos.length === 0 && <p className="cc-note">No repositories were returned by GitHub. Check the server logs for account errors.</p>}
     </Shell>
@@ -149,13 +147,15 @@ function RepoPanel({ repo }: { repo: Repo }) {
   return (
     <Shell id={`repo:${repo.id}`}>
       <p className="cc-meta">{repo.account} · {status}</p>
-      <h1 className="cc-title">{repo.name}</h1>
+      <div className="cc-title-btn-group">
+        <a className="cc-btn" href={repo.url} target="_blank" rel="noreferrer"><img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/github-light.png"></img></a>
+        <h1 className="cc-title">{repo.name}</h1>
+      </div>
       <p className="cc-body">{repo.description ?? 'No description.'}</p>
       <p className="cc-big">{formatNumber(repo.commits)}<span> commits</span></p>
       <p className="cc-muted">Last pushed {formatDate(repo.pushedAt)}</p>
       <h2 className="cc-h2">Languages</h2>
       <LangBar languages={repo.languages} />
-      <a className="cc-btn" href={repo.url} target="_blank" rel="noreferrer">Open on GitHub <span aria-hidden>↗</span></a>
     </Shell>
   );
 }
@@ -191,12 +191,12 @@ function ExperiencePanel({ portfolio }: { portfolio: Portfolio }) {
   return (
     <Shell
       id="experience"
-      footer={current && (
-        <div className="cc-footer">
-          <span>{current.title}</span>
-          <a className="cc-btn cc-btn-inline" href={`/experience/${current.id}`}>Expand <span aria-hidden>↗</span></a>
-        </div>
-      )}
+      // footer={current && (
+      //   <div className="cc-footer">
+      //     <span>{current.title}</span>
+      //     <a className="cc-btn cc-btn-inline" href={`/experience/${current.id}`}>Expand <span aria-hidden>↗</span></a>
+      //   </div>
+      // )}
     >
       <h1 className="cc-title">Experience</h1>
       <p className="cc-lead">Select an entry, then expand it for the full page.</p>
@@ -205,9 +205,14 @@ function ExperiencePanel({ portfolio }: { portfolio: Portfolio }) {
           <li key={e.id}>
             <i className="cc-hexdot cc-hexdot-ink" />
             <button type="button" className={e.id === sel ? 'is-selected' : ''} aria-pressed={e.id === sel} onClick={() => setSel(e.id)}>
-              <span className="cc-muted">{formatMonth(e.startDate)} – {e.endDate ? formatMonth(e.endDate) : 'Present'}</span>
-              <strong>{e.title}</strong>
-              <em>{e.organisation}</em>
+              <div className="cc-exp-context">
+                <span className="cc-muted">{formatMonth(e.startDate)} – {e.endDate ? formatMonth(e.endDate) : 'Present'}</span>
+                <span>|</span>
+                <em>{e.organisation}</em>
+              </div>
+              <a className="cc-btn cc-btn-inline" href={`/experience/${e.id}`}>
+                <strong>{e.title}</strong>
+              </a>
               <span>{e.summary}</span>
             </button>
           </li>
