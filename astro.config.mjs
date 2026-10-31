@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   // output: 'server',
   // adapter: node({ mode: 'standalone' }),
+  site: 'https://arzen1kos.github.io',
   integrations: [react()],
   vite: {
     resolve: {
