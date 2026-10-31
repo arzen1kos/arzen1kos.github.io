@@ -22,7 +22,6 @@ repositories the configured tokens can access, including private repository
 metadata; use tokens scoped only to accounts and repositories you intend to
 show.
 
-The shared SQLite database path defaults to `backend/db/portfolio.db`.
 `backend/db/schema.sql` defines the portfolio content tables. The local
 database is ignored by Git and is never replaced by setup.
 
@@ -111,10 +110,6 @@ admin tables in the same SQLite file:
 ```sh
 python backend/manage.py migrate
 ```
-
-The same `PORTFOLIO_DB_PATH` variable is read by Django and Astro. Its default
-is `./backend/db/portfolio.db`; `.env` values are loaded by both server
-processes.
 
 Projects can be linked to a GitHub repository by setting `repo_full_name` to
 `owner/repo`. Their database `display_name`, `description`, and `languages`
