@@ -11,8 +11,8 @@ import type { PeakKey, Repo } from './types';
 /* ------------------------------------------------------------------ */
 
 const BLUE = { line: '#7fd8ff', slab: '#0b2a52', deep: '#12315e', mid: '#1f64b0', snow: '#d6f1ff', amber: '#ffd166' };
-const TARGET = new THREE.Vector3(-7, 2, 0); // x offset leaves room for the panel; the mountain is at the island centre
-const FIT = 0.78; // share of screen width the island spans at launch
+const TARGET = new THREE.Vector3(-10, 2, 0); // x offset leaves room for the panel; the mountain is at the island centre
+const FIT = 0.65;
 
 const HEX = (() => {
   const g = new THREE.CylinderGeometry(1, 1, 1, 6, 1);
@@ -200,12 +200,28 @@ function buildMountain() {
   const trailLine = new THREE.Line(trail, new THREE.LineDashedMaterial({ color: BLUE.amber, dashSize: 0.8, gapSize: 0.5, transparent: true, opacity: 0.95 }));
   trailLine.computeLineDistances();
 
-  return { geometry, creases, trail, trailLine };
+  // Height of the actual faceted surface (what you see), found by casting a ray straight down.
+  // Towers are seated on this, so they touch the facets instead of the smooth formula behind them.
+  const probe = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  const raycaster = new THREE.Raycaster();
+  const origin = new THREE.Vector3();
+  const down = new THREE.Vector3(0, -1, 0);
+  const heightAt = (x: number, z: number) => {
+    if (terrainHeight(x, z) < 0.02) return 0; // flat ground, skip the ray
+    raycaster.set(origin.set(x, 60, z), down);
+    const hit = raycaster.intersectObject(probe, false)[0];
+    return hit ? hit.point.y : 0;
+  };
+  const dispose = () => {
+    geometry.dispose(); creases.dispose(); trail.dispose();
+    (trailLine.material as THREE.Material).dispose();
+    (probe.material as THREE.Material).dispose();
+  };
+
+  return { geometry, creases, trail, trailLine, heightAt, dispose };
 }
 
-function Mountain() {
-  const m = useMemo(buildMountain, []);
-  useEffect(() => () => { m.geometry.dispose(); m.creases.dispose(); m.trail.dispose(); (m.trailLine.material as THREE.Material).dispose(); }, [m]);
+function Mountain({ m }: { m: ReturnType<typeof buildMountain> }) {
   const swallow = (e: ThreeEvent<PointerEvent | MouseEvent>) => e.stopPropagation(); // also blocks hovering towers hidden behind it
   return (
     <group>
@@ -311,7 +327,7 @@ function PeakHex({ peak, active, onHover, onSelect }: {
 /* Towers                                                              */
 /* ------------------------------------------------------------------ */
 
-interface Placed { repo: Repo; x: number; z: number; h: number; color: string }
+interface Placed { repo: Repo; x: number; y: number; z: number; h: number; color: string }
 
 function Reticle({ x, y, z }: { x: number; y: number; z: number }) {
   const ref = useRef<THREE.Mesh>(null);
@@ -325,12 +341,12 @@ function Towers({ placed, activeId, onHover, onSelect }: {
 }) {
   return (
     <>
-      {placed.map(({ repo, x, z, h, color }) => {
+      {placed.map(({ repo, x, y, z, h, color }) => {
         const mats = towerMaterials(color, modeOf(repo), repo.id === activeId);
         return (
           <group
             key={repo.id}
-            position={[x, 0, z]}
+            position={[x, y, z]}
             scale={[TOWER_RADIUS, h, TOWER_RADIUS]}
             onPointerOver={(e: ThreeEvent<PointerEvent>) => { e.stopPropagation(); onHover(repo); }}
             onPointerOut={() => onHover(null)}
@@ -349,7 +365,7 @@ function SpyLabel({ item }: { item: Placed }) {
   const { repo } = item;
   const status = repo.isArchived ? 'archived' : repo.isPrivate ? 'private' : 'public';
   return (
-    <Html position={[item.x, item.h + 0.4, item.z]} style={{ pointerEvents: 'none' }} zIndexRange={[30, 0]}>
+    <Html position={[item.x, item.y + item.h + 0.4, item.z]} style={{ pointerEvents: 'none' }} zIndexRange={[30, 0]}>
       <div className="cc-spy">
         <span className="cc-spy-name">{repo.name}</span>
         <span className="cc-spy-sub">{repo.primaryLanguage ?? 'no language'} / {repo.commits} commits / {status}</span>
@@ -375,15 +391,21 @@ export interface CitySceneProps {
 }
 
 export function CityScene(p: CitySceneProps) {
+  const mountain = useMemo(buildMountain, []);
+  useEffect(() => () => mountain.dispose(), [mountain]);
+
   const placed = useMemo<Placed[]>(() => {
     const sorted = [...p.repos].sort((a, b) => b.commits - a.commits);
-    const slots = citySlots(sorted.length);
+    const slots = citySlots(sorted.length, mountain.heightAt);
     const max = Math.max(1, ...sorted.map((r) => r.commits));
     return slots.map((slot, i) => {
       const repo = sorted[i]!;
-      return { repo, x: slot.x, z: slot.z, h: 1.4 + (7.5 * Math.log1p(repo.commits)) / Math.log1p(max), color: towerColor(repo) };
+      // Towers higher up the slope are shorter, so they never out-tower the peaks and their floating hexagons.
+      const climb = 1 - 0.55 * THREE.MathUtils.clamp(slot.y / 10, 0, 1);
+      const h = (1.4 + (7.5 * Math.log1p(repo.commits)) / Math.log1p(max)) * climb;
+      return { repo, x: slot.x, y: slot.y, z: slot.z, h, color: towerColor(repo) };
     });
-  }, [p.repos]);
+  }, [p.repos, mountain]);
 
   const activeId = p.hoverRepo?.id ?? p.pinnedId;
   const hovered = placed.find((t) => t.repo.id === p.hoverRepo?.id);
@@ -412,12 +434,12 @@ export function CityScene(p: CitySceneProps) {
         maxDistance={260}
       />
       <Island />
-      <Mountain />
+      <Mountain m={mountain} />
       <Towers placed={placed} activeId={activeId} onHover={p.onHoverRepo} onSelect={p.onSelectRepo} />
       {PEAKS.map((peak) => (
         <PeakHex key={peak.key} peak={peak} active={p.hoverPeak === peak.key} onHover={p.onHoverPeak} onSelect={p.onSelectPeak} />
       ))}
-      {reticle && <Reticle x={reticle.x} y={reticle.h} z={reticle.z} />}
+      {reticle && <Reticle x={reticle.x} y={reticle.y} z={reticle.z} />}
       {hovered && <SpyLabel item={hovered} />}
     </Canvas>
   );
