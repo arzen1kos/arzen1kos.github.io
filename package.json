@@ -8,19 +8,27 @@
     "check": "astro check",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "dev:backend": "python backend/manage.py runserver"
+    "dev:backend": "python backend/manage.py runserver",
+    "db:setup": "node scripts/setup-db.mjs"
   },
   "dependencies": {
+    "@astrojs/node": "^11.1.9",
     "@astrojs/react": "latest",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
     "astro": "latest",
+    "better-sqlite3": "^13.0.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@astrojs/check": "latest",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.187.0",
     "typescript": "^5.6.0"
   }
 }

@@ -1,11 +1,8 @@
 ---
 import Base from '@/layouts/Base.astro';
-import App from '@/components/App';
+import ContributionCity from '@/components/contribution-city/ContributionCity';
+export const prerender = false;
 ---
-
-<Base title="Portfolio">
-  <App client:only="react" />
-  <noscript>
-    <p class="noscript">This portfolio needs JavaScript to show its node tree.</p>
-  </noscript>
+<Base title="Contribution City">
+  <ContributionCity client:only="react" />
 </Base>

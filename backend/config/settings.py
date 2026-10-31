@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = BASE_DIR.parent
+load_dotenv(REPO_ROOT / '.env')
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-local-development-only')
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
@@ -52,10 +55,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+portfolio_db = Path(os.environ.get('PORTFOLIO_DB_PATH', BASE_DIR / 'db' / 'portfolio.db')).expanduser()
+if not portfolio_db.is_absolute():
+    portfolio_db = REPO_ROOT / portfolio_db
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Path(os.environ.get('PORTFOLIO_DB_PATH', BASE_DIR / 'db.sqlite3')),
+        'NAME': portfolio_db.resolve(),
+        'OPTIONS': {'timeout': 5},
     }
 }
 

@@ -1,58 +1,49 @@
 from django.contrib import admin
-
-from .models import Course, Experience, Profile, Project, Skill, SkillCategory
+from .models import Course, CourseProject, Experience, Profile, Project, Skill, SkillCategory, SoftSkill
 
 
 class SkillInline(admin.TabularInline):
     model = Skill
-    extra = 0
+    extra = 1
 
 
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'github_username', 'graduation_school')
-    fieldsets = (
-        ('Profile', {'fields': ('name', 'photo_url', 'specialisations')}),
-        ('Social links', {'fields': ('linkedin_url', 'github_url', 'github_username')}),
-        ('Education', {'fields': ('graduation_date', 'graduation_school')}),
-    )
-
-    def has_add_permission(self, request):
-        return not Profile.objects.exists()
-
-
-@admin.register(SkillCategory)
-class SkillCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'kind', 'position')
-    list_filter = ('kind',)
-    search_fields = ('name', 'skills__name')
-    inlines = (SkillInline,)
-
-
-@admin.register(Skill)
-class SkillAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'position')
-    list_filter = ('category__kind', 'category')
-    search_fields = ('name', 'description', 'category__name')
-
-
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'github_available', 'demo_available', 'position')
-    list_filter = ('github_available', 'demo_available')
-    search_fields = ('title', 'one_liner', 'content')
+class CourseProjectInline(admin.TabularInline):
+    model = CourseProject
+    extra = 1
 
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'year', 'position')
+    list_display = ('code', 'name', 'year', 'sort_order')
     list_filter = ('year',)
-    search_fields = ('code', 'name', 'description')
-    filter_horizontal = ('projects',)
+    inlines = [CourseProjectInline]
+
+
+@admin.register(SkillCategory)
+class SkillCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'color', 'sort_order')
+    inlines = [SkillInline]
 
 
 @admin.register(Experience)
 class ExperienceAdmin(admin.ModelAdmin):
-    list_display = ('role', 'company', 'start_year', 'end_year', 'position')
-    list_filter = ('company',)
-    search_fields = ('role', 'company', 'description')
+    list_display = ('title', 'organisation', 'start_date', 'end_date', 'visible', 'sort_order')
+    list_editable = ('visible', 'sort_order')
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('display_name', 'repo_full_name', 'languages', 'visible', 'sort_order')
+    list_editable = ('visible', 'sort_order')
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return not Profile.objects.exists()   # schema allows exactly one row (id = 1)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+admin.site.register(SoftSkill)
