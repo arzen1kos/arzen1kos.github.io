@@ -1,8 +1,8 @@
 # ARZENIKOS.io
 
-Astro + React + TypeScript frontend with a Django backend and SQLite database.
-Portfolio content is stored only in the local database; a fresh clone starts
-with an empty portfolio.
+Astro + React + Three.js portfolio with Django Admin CRUD backed by one shared
+SQLite database. The repository includes the schema only; portfolio data and
+GitHub credentials stay local.
 
 ## Requirements
 
@@ -10,6 +10,23 @@ with an empty portfolio.
 - Node.js 22.5 or newer
 
 ## Set up after cloning
+
+```text
+    cp .env.example .env
+```
+
+Add one server-side token per GitHub account to `.env`, for example
+`GITHUB_TOKEN_PERSONAL=...` and `GITHUB_TOKEN_WORK=...`. Tokens are read only
+by the Astro server and are never sent to the browser. The city displays
+repositories the configured tokens can access, including private repository
+metadata; use tokens scoped only to accounts and repositories you intend to
+show.
+
+The shared SQLite database path defaults to `backend/db/portfolio.db`.
+`backend/db/schema.sql` defines the portfolio content tables. The local
+database is ignored by Git and is never replaced by setup.
+
+### Creating a virtual environment
 
 From the repository root, create and activate a Python environment, install
 dependencies, and build the frontend:
@@ -30,18 +47,19 @@ Or on macOS/Linux:
 source .venv/bin/activate
 ```
 
-Then install and build:
+Then install dependencies and initialize the shared database:
 
 ```sh
 python -m pip install -r backend/requirements.txt
 npm install
+npm run db:setup
+python backend/manage.py migrate
 npm run build
 ```
 
-Create the SQLite database schema and an administrator account:
+Create a Django administrator account:
 
 ```sh
-python backend/manage.py migrate
 python backend/manage.py createsuperuser
 ```
 
@@ -51,11 +69,10 @@ Start Django:
 python backend/manage.py runserver
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000). **Sign in to edit** opens
-Django Admin. After signing in, create or update the profile, projects, skill
-categories and skills, experience entries, and courses there. Associate
-projects with courses using the course editor. If you return to the portfolio,
-the sign-in link changes to **Edit portfolio**.
+Open [http://localhost:4321/city](http://localhost:4321/city) for the city and
+[http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) for Django Admin.
+The lock icon beside your name links to the admin editor for profile,
+experience, projects, courses, and skills.
 
 ### Frontend development
 
@@ -65,48 +82,52 @@ Keep Django running, then start Astro in a second terminal:
 npm run dev
 ```
 
-Open [http://localhost:4321](http://localhost:4321). Astro proxies `/api`,
-`/admin`, and `/static` to Django at `127.0.0.1:8000`.
+Open [http://localhost:4321](http://localhost:4321). The `/api/city` Astro
+server endpoint reads the shared database and loads GitHub repositories with
+the configured tokens. Django Admin uses that same SQLite file.
+
+To re-establish the database schema on a fresh clone, run `npm run db:setup`.
+It creates any missing tables without adding placeholder content. Then run
+`python backend/manage.py migrate` to create Django's authentication/admin
+tables in the same file. Do not delete the database to reset the schema if it
+contains content; back it up and migrate the schema deliberately.
 
 ## Data and schema
 
-- SQLite file: `backend/db.sqlite3` (ignored by Git; do not commit it).
-- Django models and admin: `backend/portfolio/`.
-- Versioned schema: `backend/portfolio/migrations/`.
+- Shared SQLite file: `backend/db/portfolio.db`.
+- Content schema: `backend/db/schema.sql`.
+- Courses can be grouped by year and linked to project records in Django Admin.
+- Django models and admin: `backend/portfolio/` (models map to the SQL-owned tables).
 - Public read-only data endpoint: `/api/portfolio/`.
+- Server-side city endpoint: `/api/city`.
 - Authentication status endpoint: `/api/session/`.
 - Authenticated CRUD: `/admin/` (Django session authentication and CSRF protection).
 
-Migrations recreate the schema, not portfolio content. To apply migrations after
-a schema update, run:
+The schema SQL is the source of truth for portfolio-content tables. After
+changing it, back up the database, update `schema.sql`, and run the applicable
+forward-only migration/setup step. Django's migrations create its auth and
+admin tables in the same SQLite file:
 
 ```sh
 python backend/manage.py migrate
 ```
 
-When changing models, generate and commit the new migration first:
+The same `PORTFOLIO_DB_PATH` variable is read by Django and Astro. Its default
+is `./backend/db/portfolio.db`; `.env` values are loaded by both server
+processes.
 
-```sh
-python backend/manage.py makemigrations
-python backend/manage.py migrate
-```
+Projects can be linked to a GitHub repository by setting `repo_full_name` to
+`owner/repo`. Their database `display_name`, `description`, and `languages`
+customize the Projects panel without changing the repository name or tower.
+The panel provides language filters and links to the matching repository.
 
-The database path can be changed with `PORTFOLIO_DB_PATH`. Use an absolute path
-for predictable local and hosted deployments. Back up the SQLite file
-separately if you want to keep entered content; it is intentionally never
-versioned.
-
-Projects support a logo URL, GitHub/demo links and availability flags,
-language/tag lists, full-page text, and image links. For project images, enter a
-JSON list such as:
-
-```json
-[{"url": "https://example.com/image.jpg", "alt": "Project screenshot"}]
-```
-
-The frontend loads content from Django at runtime. Project cards open their
-full-page project details; course cards include associated projects. The app
-has no bundled portfolio records or frontend content data modules.
+The city uses a tilted bird's-eye camera and slow rotation. Towers are
+hexagonal and positioned along the mountain foot; the three floating peak
+hexagons open Skills, Experience, and Projects panels. Archived repositories
+are dimmed and private repositories are faded. Hovering a tower previews its
+details; clicking it pins that repository in the upper-left panel. Click empty
+space or press Escape to return to the default panel. Panels slowly scroll
+when their content overflows; scrolling pauses while you interact with them.
 
 ## Frontend module imports
 

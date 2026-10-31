@@ -1,5 +1,5 @@
+"""Unmanaged Django models over the shared backend/db/portfolio.db database."""
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -23,157 +23,129 @@ def validate_project_images(value):
 
 
 class Profile(models.Model):
-    name = models.CharField(max_length=120, blank=True)
-    photo_url = models.URLField(blank=True)
-    linkedin_url = models.URLField(blank=True)
-    github_url = models.URLField(blank=True)
-    github_username = models.CharField(max_length=80, blank=True)
-    specialisations = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='JSON list of specialisation labels.',
-        validators=[validate_string_list],
-    )
-    graduation_date = models.CharField(max_length=120, blank=True)
-    graduation_school = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    headline = models.CharField(max_length=300, blank=True, default='')
+    bio = models.TextField(blank=True, default='')
 
     class Meta:
-        verbose_name = 'profile'
-        verbose_name_plural = 'profile'
+        managed = False
+        db_table = 'profile'
 
     def __str__(self):
-        return self.name or 'Portfolio profile'
+        return self.name
+
+
+class Experience(models.Model):
+    title = models.CharField(max_length=300)
+    organisation = models.CharField(max_length=300)
+    location = models.CharField(max_length=200, blank=True, default='')
+    start_date = models.CharField(max_length=7, help_text='YYYY-MM')
+    end_date = models.CharField(max_length=7, blank=True, null=True, help_text='YYYY-MM, empty = current')
+    summary = models.TextField(blank=True, default='')
+    details = models.TextField(blank=True, default='', help_text='One bullet per line (expanded page).')
+    sort_order = models.IntegerField(default=0)
+    visible = models.BooleanField(default=True)
+
+    class Meta:
+        managed = False
+        db_table = 'experience'
+        ordering = ['-start_date', 'sort_order']
+
+    def __str__(self):
+        return f'{self.title} @ {self.organisation}'
 
 
 class SkillCategory(models.Model):
-    class Kind(models.TextChoices):
-        TECH = 'tech', 'Tech'
-        SOFT = 'soft', 'Soft'
-
-    name = models.CharField(max_length=100)
-    kind = models.CharField(max_length=8, choices=Kind.choices, default=Kind.TECH)
-    color = models.CharField(max_length=20, blank=True)
-    position = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=100, unique=True)
+    color = models.CharField(max_length=9, default='#4cc9f0')
+    sort_order = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ('position', 'name')
+        managed = False
+        db_table = 'skill_category'
+        ordering = ['sort_order', 'id']
         verbose_name_plural = 'skill categories'
 
     def __str__(self):
-        return f'{self.name} ({self.get_kind_display()})'
+        return self.name
 
 
 class Skill(models.Model):
-    category = models.ForeignKey(SkillCategory, related_name='skills', on_delete=models.CASCADE)
+    category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, db_column='category_id', related_name='skills')
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    position = models.PositiveIntegerField(default=0)
+    sort_order = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ('position', 'name')
+        managed = False
+        db_table = 'skill'
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return self.name
+
+
+class SoftSkill(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, default='')
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        managed = False
+        db_table = 'soft_skill'
+        ordering = ['sort_order', 'id']
 
     def __str__(self):
         return self.name
 
 
 class Project(models.Model):
-    title = models.CharField(max_length=160)
-    one_liner = models.CharField(max_length=280, blank=True)
-    content = models.TextField(blank=True, help_text='Full project page content.')
-    github_url = models.URLField(blank=True)
-    github_available = models.BooleanField(default=False)
-    demo_url = models.URLField(blank=True)
-    demo_available = models.BooleanField(default=False)
-    logo_url = models.URLField(blank=True)
-    languages = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='JSON list of languages or technologies.',
-        validators=[validate_string_list],
+    repo_full_name = models.CharField(
+        max_length=200, blank=True, null=True,
+        help_text="GitHub 'owner/repo'. Links this card to a repo (languages + public link).",
     )
-    tags = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='JSON list of project tags.',
-        validators=[validate_string_list],
-    )
-    images = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='List of image URLs, or objects containing "url" and optional "alt".',
-        validators=[validate_project_images],
-    )
-    position = models.PositiveIntegerField(default=0)
+    display_name = models.CharField(max_length=200, help_text='Name shown in the Projects panel only.')
+    description = models.TextField(blank=True, default='', help_text='Empty = use the GitHub description.')
+    languages = models.CharField(max_length=300, blank=True, default='', help_text='Comma separated. Empty = detect from the repo.')
+    color = models.CharField(max_length=9, default='#2e7d32')
+    sort_order = models.IntegerField(default=0)
+    visible = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ('position', 'title')
-
-    def clean(self):
-        errors = {}
-        if self.github_available and not self.github_url:
-            errors['github_url'] = 'A GitHub URL is required when the link is marked available.'
-        if self.demo_available and not self.demo_url:
-            errors['demo_url'] = 'A demo URL is required when the link is marked available.'
-        if errors:
-            raise ValidationError(errors)
+        managed = False
+        db_table = 'project'
+        ordering = ['sort_order', 'id']
 
     def __str__(self):
-        return self.title
+        return self.display_name
 
 
 class Course(models.Model):
-    class Year(models.TextChoices):
-        YEAR_1 = 'y1', 'Year 1'
-        YEAR_2 = 'y2', 'Year 2'
-        YEAR_3 = 'y3', 'Year 3'
+    YEAR_CHOICES = [('y1', 'Year 1'), ('y2', 'Year 2'), ('y3', 'Year 3')]
 
-    code = models.CharField(max_length=40, unique=True)
-    name = models.CharField(max_length=160)
-    description = models.TextField(blank=True)
-    year = models.CharField(max_length=2, choices=Year.choices)
-    tags = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='JSON list of course tags.',
-        validators=[validate_string_list],
-    )
-    projects = models.ManyToManyField(Project, related_name='courses', blank=True)
-    position = models.PositiveIntegerField(default=0)
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=200)
+    tags = models.JSONField(default=list, blank=True, validators=[validate_string_list])
+    year = models.CharField(max_length=2, choices=YEAR_CHOICES)
+    sort_order = models.IntegerField(default=0)
+    projects = models.ManyToManyField(Project, through='CourseProject', related_name='courses')
 
     class Meta:
-        ordering = ('year', 'position', 'code')
+        managed = False
+        db_table = 'course'
+        ordering = ['year', 'sort_order', 'id']
 
     def __str__(self):
-        return f'{self.code} — {self.name}'
+        return f'{self.code}: {self.name}'
 
 
-class Experience(models.Model):
-    role = models.CharField(max_length=160)
-    company = models.CharField(max_length=160)
-    start_year = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1900), MaxValueValidator(2200)]
-    )
-    end_year = models.PositiveSmallIntegerField(
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(1900), MaxValueValidator(2200)],
-        help_text='Leave blank for a current role.',
-    )
-    description = models.TextField(blank=True)
-    tags = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='JSON list of experience tags.',
-        validators=[validate_string_list],
-    )
-    position = models.PositiveIntegerField(default=0)
+class CourseProject(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, db_column='course_id')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, db_column='project_id')
 
     class Meta:
-        ordering = ('position', '-start_year')
-
-    def clean(self):
-        if self.end_year is not None and self.end_year < self.start_year:
-            raise ValidationError({'end_year': 'The end year must be the same as or later than the start year.'})
+        managed = False
+        db_table = 'course_project'
+        unique_together = [('course', 'project')]
 
     def __str__(self):
-        return f'{self.role} — {self.company}'
+        return f'{self.course} - {self.project}'

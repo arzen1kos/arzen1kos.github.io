@@ -2,124 +2,87 @@ from django.conf import settings
 from django.http import FileResponse, Http404, JsonResponse
 from django.views.decorators.http import require_GET
 
-from .models import Course, Experience, Profile, Project, SkillCategory
-
-
-def _project_data(project):
-    images = []
-    for image in project.images:
-        if isinstance(image, str):
-            images.append({'url': image, 'alt': ''})
-        elif isinstance(image, dict) and isinstance(image.get('url'), str):
-            images.append({'url': image['url'], 'alt': str(image.get('alt', ''))})
-
-    return {
-        'id': project.pk,
-        'name': project.title,
-        'description': project.one_liner,
-        'fullPageContent': project.content,
-        'logo': project.logo_url,
-        'languages': project.languages,
-        'tags': project.tags,
-        'images': images,
-        'repo': project.github_url,
-        'live': project.demo_available,
-        'url': project.demo_url,
-        'githubAvailable': project.github_available,
-    }
+from .models import Course, Experience, Profile, Project, SkillCategory, SoftSkill
 
 
 @require_GET
 def portfolio_api(request):
     profile = Profile.objects.first()
-    project_data = [_project_data(project) for project in Project.objects.all()]
-    projects_by_id = {project['id']: project for project in project_data}
-
+    project_data = [
+        {
+            'id': project.pk,
+            'name': project.display_name,
+            'description': project.description,
+            'languages': [item.strip() for item in project.languages.split(',') if item.strip()],
+            'repo': project.repo_full_name,
+            'color': project.color,
+        }
+        for project in Project.objects.filter(visible=True)
+    ]
+    experience = [
+        {
+            'id': entry.pk,
+            'role': entry.title,
+            'org': entry.organisation,
+            'period': f'{entry.start_date} – {entry.end_date or "Present"}',
+            'startDate': entry.start_date,
+            'endDate': entry.end_date,
+            'summary': entry.summary,
+            'details': [line.strip() for line in entry.details.splitlines() if line.strip()],
+            'description': entry.details,
+            'location': entry.location,
+        }
+        for entry in Experience.objects.filter(visible=True)
+    ]
+    categories = [
+        {
+            'id': category.pk,
+            'title': category.name,
+            'kind': 'tech',
+            'color': category.color,
+            'items': [skill.name for skill in category.skills.all()],
+            'skills': [{'id': skill.pk, 'name': skill.name} for skill in category.skills.all()],
+        }
+        for category in SkillCategory.objects.prefetch_related('skills')
+    ]
     courses = {
         year: [
             {
+                'id': course.pk,
                 'code': course.code,
                 'name': course.name,
-                'description': course.description,
                 'tags': course.tags,
                 'projects': [
-                    projects_by_id[project.pk]
+                    {'id': project.pk, 'name': project.display_name}
                     for project in course.projects.all()
-                    if project.pk in projects_by_id
                 ],
             }
             for course in Course.objects.filter(year=year).prefetch_related('projects')
         ]
-        for year, _ in Course.Year.choices
+        for year in ('y1', 'y2', 'y3')
     }
-
-    skill_categories = [
-        {
-            'id': category.pk,
-            'title': category.name,
-            'kind': category.kind,
-            'color': category.color,
-            'items': [skill.name for skill in category.skills.all()],
-            'skills': [
-                {
-                    'id': skill.pk,
-                    'name': skill.name,
-                    'description': skill.description,
-                }
-                for skill in category.skills.all()
-            ],
-        }
-        for category in SkillCategory.objects.prefetch_related('skills')
-    ]
-
-    experience = []
-    for entry in Experience.objects.all():
-        period = f'{entry.start_year} – {entry.end_year if entry.end_year else "Present"}'
-        description_lines = [line.strip() for line in entry.description.splitlines() if line.strip()]
-        experience.append(
-            {
-                'id': entry.pk,
-                'role': entry.role,
-                'org': entry.company,
-                'period': period,
-                'startYear': entry.start_year,
-                'endYear': entry.end_year,
-                'summary': description_lines[0] if description_lines else '',
-                'details': description_lines,
-                'description': entry.description,
-                'tags': entry.tags,
-            }
-        )
 
     return JsonResponse(
         {
             'site': {
                 'name': profile.name if profile else '',
-                'avatar': profile.photo_url if profile else '',
-                'specialisation': profile.specialisations if profile else [],
-                'graduation': {
-                    'date': profile.graduation_date if profile else '',
-                    'school': profile.graduation_school if profile else '',
-                },
-                'github': {
-                    'user': profile.github_username if profile else '',
-                    'url': profile.github_url if profile else '',
-                },
-                'linkedin': profile.linkedin_url if profile else '',
+                'avatar': '',
+                'specialisation': [],
+                'graduation': {'date': '', 'school': ''},
+                'github': {'user': '', 'url': ''},
+                'linkedin': '',
             },
             'courses': courses,
-            'years': [year for year, _ in Course.Year.choices],
+            'years': ['y1', 'y2', 'y3'],
             'projects': project_data,
-            'techSkills': [item for item in skill_categories if item['kind'] == SkillCategory.Kind.TECH],
+            'techSkills': categories,
             'softSkills': [
                 {
-                    'id': skill['id'],
-                    'title': skill['name'],
-                    'blurb': skill['description'],
+                    'id': skill.pk,
+                    'title': skill.name,
+                    'blurb': skill.description,
                 }
-                for category in skill_categories
-                if category['kind'] == SkillCategory.Kind.SOFT
-                for skill in category['skills']
+                for skill in SoftSkill.objects.all()
             ],
             'experience': experience,
         }

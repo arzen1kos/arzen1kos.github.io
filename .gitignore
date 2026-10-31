@@ -21,6 +21,8 @@ logs/
 
 # Local Django database and collected static output
 /backend/*.sqlite3
+/backend/db/*.db
+/backend/db/*.db-*
 /backend/static-collected/
 /backend/.env
 /data/*.db
