@@ -112,10 +112,6 @@ admin tables in the same SQLite file:
 python backend/manage.py migrate
 ```
 
-The same `PORTFOLIO_DB_PATH` variable is read by Django and Astro. Its default
-is `./backend/db/portfolio.db`; `.env` values are loaded by both server
-processes.
-
 Projects can be linked to a GitHub repository by setting `repo_full_name` to
 `owner/repo`. Their database `display_name`, `description`, and `languages`
 customize the Projects panel without changing the repository name or tower.
