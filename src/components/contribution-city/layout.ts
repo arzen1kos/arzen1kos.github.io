@@ -1,7 +1,7 @@
 import { ISLAND, islandEdgeDistance, mountainFootDistance, terrainHeight } from './terrain';
 
 export const TOWER_RADIUS = 0.5;
-const GAP = 0.708;
+const GAP = 1.03;
 const EDGE_MARGIN = 0.001;  // keeps every tower (incl. its hex corners) inside the slab
 const FOOT_MARGIN = 0.01;  // clear space between the mountain's foot and the first towers
 

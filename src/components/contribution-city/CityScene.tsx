@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { citySlots, TOWER_RADIUS } from './layout';
 import { ISLAND, MAX_PEAK, MOUNTAIN, OCT_CUT, PEAKS, octagonPoints, terrainHeight } from './terrain';
@@ -222,6 +222,57 @@ function Mountain() {
 /* Floating spinning hexagons on the peaks                             */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* Peak labels: drawn on a canvas texture and rendered as sprites.     */
+/* They live inside the WebGL scene, so no DOM overlay can drop them.  */
+/* ------------------------------------------------------------------ */
+
+const LABEL_FONT = '500 30px "IBM Plex Mono", ui-monospace, monospace';
+
+function drawLabel(text: string, active: boolean) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+  ctx.font = LABEL_FONT;
+  const w = Math.ceil(ctx.measureText(text).width) + 44;
+  const h = 58;
+  canvas.width = w;
+  canvas.height = h; // resizing resets the context, so set the font again
+  ctx.font = LABEL_FONT;
+  ctx.fillStyle = active ? BLUE.amber : 'rgba(4, 20, 44, 0.78)';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255, 209, 102, 0.7)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, w - 2, h - 2);
+  ctx.fillStyle = active ? '#06101f' : BLUE.amber;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, w / 2, h / 2 + 1);
+  const map = new THREE.CanvasTexture(canvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  return { map, aspect: w / h };
+}
+
+function PeakLabel({ text, active }: { text: string; active: boolean }) {
+  const [fontTick, setFontTick] = useState(0);
+  // Redraw once the web font has loaded, otherwise the first draw uses the fallback face.
+  useEffect(() => {
+    let live = true;
+    document.fonts?.load(LABEL_FONT).then(() => { if (live) setFontTick((n) => n + 1); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+
+  const tex = useMemo(() => ({ idle: drawLabel(text, false), on: drawLabel(text, true) }), [text, fontTick]);
+  useEffect(() => () => { tex.idle.map.dispose(); tex.on.map.dispose(); }, [tex]);
+
+  const cur = active ? tex.on : tex.idle;
+  const H = 1.5; // world units tall
+  return (
+    <sprite position={[0, -2.1, 0]} scale={[H * cur.aspect, H, 1]} renderOrder={10} raycast={() => null}>
+      <spriteMaterial key={active ? 'on' : 'idle'} map={cur.map} transparent depthTest={false} depthWrite={false} />
+    </sprite>
+  );
+}
+
 function PeakHex({ peak, active, onHover, onSelect }: {
   peak: (typeof PEAKS)[number]; active: boolean;
   onHover: (key: PeakKey | null) => void; onSelect: (key: PeakKey) => void;
@@ -251,9 +302,7 @@ function PeakHex({ peak, active, onHover, onSelect }: {
         </group>
       </group>
       <mesh geometry={HIT_GEO} material={HIT_MAT} />
-      <Html position={[0, -2.1, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[20, 0]}>
-        <div className={`cc-peak-tag${active ? ' is-active' : ''}`}>{peak.label}</div>
-      </Html>
+      <PeakLabel text={peak.label} active={active} />
     </group>
   );
 }
