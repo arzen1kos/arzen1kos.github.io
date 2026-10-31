@@ -313,7 +313,7 @@
 .cc-skillcat li {
   padding: 5px 9px;
   font-size: .85rem;
-  /* background: var(--cc-paper); */
+  background: #ffffff1c;
   border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
   
 }
@@ -334,7 +334,7 @@
 }
 .cc-soft dd {
   margin: 4px 0 0;
-  color: #555;
+  color: var(--cc-paper);
   line-height: 1.5;
   
 }

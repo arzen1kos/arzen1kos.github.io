@@ -115,13 +115,6 @@ function DefaultPanel({ portfolio, repos, tokenMissing, onSelectPeak }: {
   return (
     <Shell id="default">
       <h1 className="cc-title">{portfolio.profile.name}<LockLink /></h1>
-      {/* <nav className="cc-peak-nav" aria-label="Portfolio categories">
-        {(['skills', 'experience', 'projects'] as const).map((key) => (
-          <button key={key} type="button" onClick={() => onSelectPeak(key)}>
-            {key === 'skills' ? 'Skills' : key === 'experience' ? 'Experience' : 'Projects'}
-          </button>
-        ))}
-      </nav> */}
       {portfolio.profile.headline && <p className="cc-lead">{portfolio.profile.headline}</p>}
       {portfolio.profile.bio && <p className="cc-body">{portfolio.profile.bio}</p>}
       <p className="cc-big">{formatNumber(stats.commits)}<span> commits across {repos.length} repositories</span></p>
@@ -170,7 +163,9 @@ function SkillsPanel({ portfolio }: { portfolio: Portfolio }) {
         {portfolio.skillCategories.map((c) => (
           <section key={c.id} className="cc-skillcat" style={{ '--c': c.color } as CSSProperties}>
             <h2><i className="cc-hexdot" />{c.name}</h2>
-            <ul>{c.skills.map((s) => <li key={s}>{s}</li>)}</ul>
+            <ul>{c.skills.map((s) => <li key={s}>
+              <img width="23rem" src={s}></img>
+            </li>)}</ul>
           </section>
         ))}
       </div>
