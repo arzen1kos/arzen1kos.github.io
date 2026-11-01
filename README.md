@@ -82,8 +82,9 @@ npm run dev
 ```
 
 Open [http://localhost:4321](http://localhost:4321). The `/api/city` Astro
-server endpoint reads the shared database and loads GitHub repositories with
-the configured tokens. Django Admin uses that same SQLite file.
+server endpoint reads portfolio data from Django's `/api/portfolio/` endpoint
+and loads GitHub repositories with the configured server-side tokens. Django
+Admin and the portfolio API use the same SQLite file.
 
 To re-establish the database schema on a fresh clone, run `npm run db:setup`.
 It creates any missing tables without adding placeholder content. Then run
@@ -136,10 +137,24 @@ import type { Project } from '@/types/portfolio';
 
 ## Deployment
 
-Build the frontend with `npm run build`, apply Django migrations, then run
-`python backend/manage.py collectstatic --noinput`. Serve the same-origin
-frontend and API through Django (or a reverse proxy). Django serves the
-generated frontend and WhiteNoise serves collected assets. Configure
-`DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, and `DJANGO_ALLOWED_HOSTS` in production.
-SQLite requires persistent writable storage; static-only hosting such as
-GitHub Pages cannot run this CRUD application.
+Netlify builds the Astro frontend using `netlify.toml` and the Netlify adapter.
+The Django backend must be deployed separately with the portfolio database and
+serve `/api/portfolio/` and `/admin/`. SQLite data in this repository is
+gitignored and is not included in the Netlify build.
+
+Set these variables in the Netlify site environment settings:
+
+- `DJANGO_API_URL`: public base URL of the Django service, without a trailing
+  slash (for example, `https://your-service.onrender.com`).
+- `PUBLIC_DJANGO_ADMIN_URL`: that service's `/admin/` URL.
+- `GITHUB_TOKEN_*` variables, or `GITHUB_TOKENS` as a comma-separated list.
+  These are read only by the server function; never add token values to
+  `netlify.toml` or client-prefixed environment variables.
+
+For local development, `.env` is loaded by the server and Django. Copy the
+variable names from `.env.example`, keep the database path pointing at your
+local database, and start Django before testing the Astro site. Netlify does
+not receive the ignored `.env` file, so configure its variables in the Netlify
+dashboard before publishing. The Django service also needs its own production
+`DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS`, and persistent
+database configuration.
