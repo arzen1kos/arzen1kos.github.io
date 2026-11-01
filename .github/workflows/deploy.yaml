@@ -22,11 +22,10 @@ jobs:
           cache: npm
       - uses: actions/configure-pages@v5
       - run: npm ci
-      - name: Export public GitHub repository data
+      - name: Export GitHub profile and public repository data
         run: npm run data:github
         env:
-          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKENS: ${{ secrets.GITHUB_TOKENS || secrets.GH_PAT }}
       - run: npm run build
       - uses: actions/upload-pages-artifact@v4
         with:

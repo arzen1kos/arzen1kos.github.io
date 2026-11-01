@@ -35,10 +35,10 @@ npm run data:export
 ```
 
 Review and commit the updated JSON. The local database and `.env` are ignored
-and are never uploaded to GitHub Pages. GitHub repository data is fetched
-during the Actions build and includes public, non-fork repositories only.
-Private tokens, private repository metadata, and Django Admin are not part of
-the static site.
+and are never uploaded to GitHub Pages. During the Actions build, GitHub data
+is fetched with a scoped personal access token. Only public, non-fork
+repository data is included in the deployed site; the PAT and private
+repository metadata are never published.
 
 ## GitHub Pages deployment
 
@@ -47,13 +47,45 @@ builds and deploys when changes are pushed to the `github-pages` branch, and
 can also be run manually from the Actions tab. It:
 
 1. Installs the locked npm dependencies.
-2. Fetches public repositories for the repository owner.
+2. Uses one or more PATs to fetch each authenticated account's public profile
+   statistics, contribution calendar, and public non-fork repositories.
 3. Builds the static Astro site and deploys the `dist` output.
 
+### Connect GitHub accounts
+
+Create one token for each account whose contribution activity and repositories
+you want to include:
+
+1. Sign in as that GitHub account and open
+   [Personal access tokens → Tokens (classic)](https://github.com/settings/tokens).
+2. Select **Generate new token (classic)**, add a descriptive note such as
+   `Portfolio GitHub Pages`, and choose an expiration.
+3. Select only **`read:user`** and **`public_repo`**. Do not select **`repo`**:
+   this site exports public, non-fork repositories only. The classic-token
+   `public_repo` scope also permits writes to public repositories, so keep the
+   token private, use an expiration, and revoke it when no longer needed.
+4. Generate the token and copy it immediately. GitHub will not show it again.
+5. For deployment, open this repository's **Settings → Secrets and variables
+   → Actions → New repository secret**. Name it `GITHUB_TOKENS` and paste
+   tokens separated by commas, with one token for each account.
+6. For local exports, put the tokens in `.env` as either
+   `GITHUB_TOKENS=token1,token2` or separate variables such as
+   `GITHUB_TOKEN_PERSONAL=token1` and `GITHUB_TOKEN_WORK=token2`. Never commit
+   `.env` or paste tokens into source files.
+7. Run **Actions → Deploy to GitHub Pages → Run workflow**, or push to the
+   `github-pages` branch.
+
+The previous single-token Actions secret `GH_PAT` remains supported as a
+fallback. The build queries GitHub's GraphQL API for each authenticated
+account's contribution calendar and repository commit totals, then writes
+public-only data to `github.json` and `repos.json`. Tokens are used only during
+the build and are not included in the static site. Private repositories are
+filtered out before either JSON file is written. Contributions from accounts
+are combined by date in the displayed calendar.
+
 The repository is `arzen1kos.github.io`, so Astro uses the root path
-(`https://arzen1kos.github.io/`). No personal GitHub token is required. In the
-GitHub repository, open **Settings → Pages** and set the deployment source to
-**GitHub Actions**.
+(`https://arzen1kos.github.io/`). In the GitHub repository, open
+**Settings → Pages** and set the deployment source to **GitHub Actions**.
 
 Experience entries open in accessible in-page dialogs. There are no dynamic
 experience URLs or server routes to configure.

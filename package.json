@@ -14,6 +14,7 @@
     "data:github": "node scripts/export-public-repos.mjs"
   },
   "dependencies": {
+    "@astrojs/node": "^11.1.9",
     "@astrojs/react": "latest",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",

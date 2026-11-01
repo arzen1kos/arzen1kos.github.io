@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { formatDate, formatMonth, formatNumber } from '@/lib/format';
-import type { ExperienceItem, PanelState, Portfolio, PortfolioSection, Repo, RepoLanguage } from './types';
+import type { ContributionDay, ExperienceItem, GithubStats, PanelState, Portfolio, PortfolioSection, Repo, RepoLanguage } from './types';
 
 /* ---------- slow auto-scroll: starts after a pause, yields to the reader ---------- */
 
@@ -100,13 +100,17 @@ function LangBar({ languages }: { languages: RepoLanguage[] }) {
 
 /* ---------- default ---------- */
 
-function DefaultPanel({ portfolio, repos, onSelectSection }: {
+function DefaultPanel({ portfolio, repos, github, onSelectSection }: {
   portfolio: Portfolio;
   repos: Repo[];
+  github: GithubStats;
   onSelectSection: (section: PortfolioSection) => void;
 }) {
   const stats = useMemo(() => {
     const commits = repos.reduce((s, r) => s + r.commits, 0);
+    const followers = github.accounts.reduce((total, account) => total + account.followers, 0);
+    const stars = github.accounts.reduce((total, account) => total + account.stars, 0);
+    const forks = github.accounts.reduce((total, account) => total + account.forks, 0);
     const counts = new Map<string, { n: number; color: string | null }>();
     for (const r of repos) {
       if (!r.primaryLanguage) continue;
@@ -115,28 +119,64 @@ function DefaultPanel({ portfolio, repos, onSelectSection }: {
     }
     return {
       commits,
-      accounts: new Set(repos.map((r) => r.account)).size,
+      followers,
+      stars,
+      forks,
       archived: repos.filter((r) => r.isArchived).length,
       top: [...counts.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 6),
     };
-  }, [repos]);
+  }, [github.accounts, repos]);
 
   return (
     <Shell id="default" activeSection="overview" onSelectSection={onSelectSection}>
       <h1 className="cc-title">{portfolio.profile.name}</h1>
+      <ul className="cc-github-accounts" aria-label="Linked GitHub accounts">
+        {github.accounts.map((account) => (
+          <li key={account.login}>
+            <a className="cc-profile-link" href={account.profileUrl} target="_blank" rel="noreferrer">@{account.login} ↗</a>
+            <span>{formatNumber(account.totalContributions)} contributions · {formatNumber(account.followers)} followers</span>
+          </li>
+        ))}
+      </ul>
       {portfolio.profile.headline && <p className="cc-lead">{portfolio.profile.headline}</p>}
       {portfolio.profile.bio && <p className="cc-body">{portfolio.profile.bio}</p>}
-      <p className="cc-big">{formatNumber(stats.commits)}<span> commits across {repos.length} repositories</span></p>
-      <dl className="cc-stats">
-        <div><dt>Accounts</dt><dd>{stats.accounts}</dd></div>
+      <p className="cc-big">{formatNumber(stats.commits)}<span> commits across {repos.length} public repositories from {github.accounts.length} accounts</span></p>
+      <dl className="cc-stats cc-github-stats">
+        <div><dt>Contributions (year, all accounts)</dt><dd>{formatNumber(github.totalContributions)}</dd></div>
+        <div><dt>Public repositories</dt><dd>{formatNumber(repos.length)}</dd></div>
+        <div><dt>Followers (all accounts)</dt><dd>{formatNumber(stats.followers)}</dd></div>
+        <div><dt>Stars (all accounts)</dt><dd>{formatNumber(stats.stars)}</dd></div>
+        <div><dt>Forks (all accounts)</dt><dd>{formatNumber(stats.forks)}</dd></div>
         <div><dt>Archived</dt><dd>{stats.archived}</dd></div>
       </dl>
+      <h2 className="cc-h2">Contribution activity</h2>
+      <ContributionCalendar days={github.contributionDays} />
+      <p className="cc-muted">Daily contributions over the past year</p>
       <h2 className="cc-h2">Main languages</h2>
       <ul className="cc-langlist">
         {stats.top.map(([name, v]) => <li key={name}><i style={{ background: v.color ?? '#8aa0b4' }} />{name}<span>{v.n} repos</span></li>)}
       </ul>
       {repos.length === 0 && <p className="cc-note">No public repositories were available for this build.</p>}
     </Shell>
+  );
+}
+
+function ContributionCalendar({ days }: { days: ContributionDay[] }) {
+  return (
+    <div
+      className="cc-contribution-grid"
+      role="img"
+      aria-label={`Contribution calendar with ${formatNumber(days.reduce((total, day) => total + day.count, 0))} contributions over the past year`}
+    >
+      {days.map((day) => (
+        <span
+          key={day.date}
+          data-level={day.level}
+          title={`${day.count} contributions on ${day.date}`}
+          aria-hidden="true"
+        />
+      ))}
+    </div>
   );
 }
 
@@ -178,8 +218,8 @@ function SkillsPanel({ portfolio, onSelectSection }: {
         {portfolio.skillCategories.map((c) => (
           <section key={c.id} className="cc-skillcat" style={{ '--c': c.color } as CSSProperties}>
             <h2><i className="cc-hexdot" />{c.name}</h2>
-            <ul>{c.skills.map((s) => <li key={s}>
-              <img width="23rem" src={s}></img>
+            <ul>{c.skills.map((s) => <li key={s} >
+              <img src={s}></img>
             </li>)}</ul>
           </section>
         ))}
@@ -361,7 +401,7 @@ function ProjectsPanel({ portfolio, repos, onSelectSection }: {
         ))}
       </div>
       <p className="cc-muted">Showing {shown.length} of {cards.length}</p>
-      <div className="cc-cards">
+      {shown.length === 0 ? <p className="cc-note">No public projects were found for this account.</p> : <div className="cc-cards">
         {shown.map((c) => {
           const inner = (
             <>
@@ -376,17 +416,18 @@ function ProjectsPanel({ portfolio, repos, onSelectSection }: {
             ? <a key={c.key} className="cc-card" href={c.url} target="_blank" rel="noreferrer">{inner}</a>
             : <div key={c.key} className="cc-card">{inner}</div>;
         })}
-      </div>
+      </div>}
     </Shell>
   );
 }
 
 /* ---------- router ---------- */
 
-export function Panel({ state, portfolio, repos, onSelectSection }: {
+export function Panel({ state, portfolio, repos, github, onSelectSection }: {
   state: PanelState;
   portfolio: Portfolio;
   repos: Repo[];
+  github: GithubStats;
   onSelectSection: (section: PortfolioSection) => void;
 }) {
   switch (state.kind) {
@@ -394,6 +435,6 @@ export function Panel({ state, portfolio, repos, onSelectSection }: {
     case 'skills': return <SkillsPanel portfolio={portfolio} onSelectSection={onSelectSection} />;
     case 'experience': return <ExperiencePanel portfolio={portfolio} onSelectSection={onSelectSection} />;
     case 'projects': return <ProjectsPanel portfolio={portfolio} repos={repos} onSelectSection={onSelectSection} />;
-    default: return <DefaultPanel portfolio={portfolio} repos={repos} onSelectSection={onSelectSection} />;
+    default: return <DefaultPanel portfolio={portfolio} repos={repos} github={github} onSelectSection={onSelectSection} />;
   }
 }

@@ -18,19 +18,24 @@ export default function ContributionCity() {
     Promise.all([
       fetch(`${base}data/portfolio.json`, { signal: ac.signal }),
       fetch(`${base}data/repos.json`, { signal: ac.signal }),
+      fetch(`${base}data/github.json`, { signal: ac.signal }),
     ])
-      .then(async ([portfolioResponse, reposResponse]) => {
+      .then(async ([portfolioResponse, reposResponse, githubResponse]) => {
         if (!portfolioResponse.ok) {
           throw new Error(`Portfolio data returned HTTP ${portfolioResponse.status}.`);
         }
         if (!reposResponse.ok) {
           throw new Error(`Repository data returned HTTP ${reposResponse.status}.`);
         }
-        const [portfolio, repos] = await Promise.all([
+        if (!githubResponse.ok) {
+          throw new Error(`GitHub statistics returned HTTP ${githubResponse.status}.`);
+        }
+        const [portfolio, repos, github] = await Promise.all([
           portfolioResponse.json() as Promise<CityPayload['portfolio']>,
           reposResponse.json() as Promise<CityPayload['repos']>,
+          githubResponse.json() as Promise<CityPayload['github']>,
         ]);
-        setData({ portfolio, repos });
+        setData({ portfolio, repos, github });
       })
       .catch((reason: unknown) => {
         if (ac.signal.aborted) return;
@@ -91,6 +96,7 @@ export default function ContributionCity() {
           state={shown}
           portfolio={data.portfolio}
           repos={data.repos}
+          github={data.github}
           onSelectSection={selectSection}
         />
       )}

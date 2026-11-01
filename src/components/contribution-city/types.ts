@@ -18,6 +18,28 @@ export interface Repo {
   languages: RepoLanguage[];
 }
 
+export interface ContributionDay { date: string; count: number; level: number }
+
+export interface GithubAccountStats {
+  login: string;
+  profileUrl: string;
+  publicRepos: number;
+  followers: number;
+  following: number;
+  stars: number;
+  forks: number;
+  totalContributions: number;
+  totalCommitContributions: number;
+  contributionDays: Omit<ContributionDay, 'level'>[];
+}
+
+export interface GithubStats {
+  accounts: GithubAccountStats[];
+  totalContributions: number;
+  totalCommitContributions: number;
+  contributionDays: ContributionDay[];
+}
+
 export interface Profile { name: string; headline: string; bio: string }
 
 export interface ExperienceItem {
@@ -53,7 +75,7 @@ export interface Portfolio {
   projects: ProjectItem[];
 }
 
-export interface CityPayload { repos: Repo[]; portfolio: Portfolio }
+export interface CityPayload { repos: Repo[]; portfolio: Portfolio; github: GithubStats }
 
 export type PanelState =
   | { kind: 'default' }
