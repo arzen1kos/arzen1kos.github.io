@@ -28,5 +28,6 @@ logs/
 /data/*.db
 /data/*.db-*
 
-# Local Netlify folder
+# Netlify deployment items
 .netlify
+deno.lock
