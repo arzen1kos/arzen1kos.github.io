@@ -1,15 +1,15 @@
 // @ts-check
-import { defineConfig, envField } from 'astro/config';
+import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import { fileURLToPath } from 'node:url';
 // import node from '@astrojs/node';
 import netlify from '@astrojs/netlify';
 
 export default defineConfig({
-  // output: 'server',
+  output: 'server',
   // adapter: node({ mode: 'standalone' }),
   adapter: netlify(),
-  site: 'https://arzen1kos.github.io',
+  // site: 'https://arzen1kos.github.io',
   integrations: [react()],
   vite: {
     resolve: {
@@ -26,21 +26,4 @@ export default defineConfig({
       },
     },
   },
-  build: {
-    assetsPrefix: '/static',
-  },
-  // env: {
-  //   schema: {
-  //     // Never bundled into client OR server output
-  //     API_SECRET: envField.string({
-  //       context: 'server',
-  //       access: 'secret',
-  //     }),
-  //     // Baked in at build time, visible to client
-  //     PUBLIC_API_URL: envField.string({
-  //       context: 'client',
-  //       access: 'public',
-  //     }),
-  //   },
-  // },
 });
