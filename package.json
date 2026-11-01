@@ -9,11 +9,11 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "dev:backend": "python backend/manage.py runserver",
-    "db:setup": "node scripts/setup-db.mjs"
+    "db:setup": "node scripts/setup-db.mjs",
+    "data:export": "node scripts/export-static-data.mjs",
+    "data:github": "node scripts/export-public-repos.mjs"
   },
   "dependencies": {
-    "@astrojs/netlify": "^8.2.10",
-    "@astrojs/node": "^11.1.9",
     "@astrojs/react": "latest",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
@@ -30,7 +30,6 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.187.0",
-    "netlify-cli": "^27.16.1",
     "typescript": "^5.6.0"
   }
 }

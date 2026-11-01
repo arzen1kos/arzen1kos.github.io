@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CityScene } from './CityScene';
 import { Panel } from './Panels';
-import type { CityPayload, PanelState, PeakKey, Repo } from './types';
+import type { CityPayload, PanelState, PeakKey, PortfolioSection, Repo } from './types';
 import './city.css';
 
 export default function ContributionCity() {
@@ -14,10 +14,28 @@ export default function ContributionCity() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch('/api/city', { signal: ac.signal })
-      .then((r) => (r.ok ? (r.json() as Promise<CityPayload>) : Promise.reject(new Error(`Server returned ${r.status}`))))
-      .then(setData)
-      .catch((e: Error) => { if (e.name !== 'AbortError') setError(e.message); });
+    const base = import.meta.env.BASE_URL;
+    Promise.all([
+      fetch(`${base}data/portfolio.json`, { signal: ac.signal }),
+      fetch(`${base}data/repos.json`, { signal: ac.signal }),
+    ])
+      .then(async ([portfolioResponse, reposResponse]) => {
+        if (!portfolioResponse.ok) {
+          throw new Error(`Portfolio data returned HTTP ${portfolioResponse.status}.`);
+        }
+        if (!reposResponse.ok) {
+          throw new Error(`Repository data returned HTTP ${reposResponse.status}.`);
+        }
+        const [portfolio, repos] = await Promise.all([
+          portfolioResponse.json() as Promise<CityPayload['portfolio']>,
+          reposResponse.json() as Promise<CityPayload['repos']>,
+        ]);
+        setData({ portfolio, repos });
+      })
+      .catch((reason: unknown) => {
+        if (ac.signal.aborted) return;
+        setError(reason instanceof Error ? reason.message : 'Unable to load portfolio data.');
+      });
     return () => ac.abort();
   }, []);
 
@@ -27,9 +45,14 @@ export default function ContributionCity() {
   }, [hoverRepo, hoverPeak]);
 
   const reset = useCallback(() => setPanel({ kind: 'default' }), []);
+  const selectSection = useCallback((section: PortfolioSection) => {
+    setPanel(section === 'overview' ? { kind: 'default' } : { kind: section });
+  }, []);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') reset(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !(e.target instanceof Element && e.target.closest('dialog'))) reset();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [reset]);
@@ -68,15 +91,14 @@ export default function ContributionCity() {
           state={shown}
           portfolio={data.portfolio}
           repos={data.repos}
-          tokenMissing={data.tokenMissing}
-          onSelectPeak={(key) => setPanel({ kind: key })}
+          onSelectSection={selectSection}
         />
       )}
       {!data && (
         <aside className="cc-panel" role="status">
           <div className="cc-scroll">
             <h1 className="cc-title">{error ? 'The city could not load' : 'Surveying the land'}</h1>
-            <p className="cc-body">{error ?? 'Fetching repositories from GitHub.'}</p>
+            <p className="cc-body">{error ?? 'Loading the portfolio.'}</p>
           </div>
         </aside>
       )}

@@ -1,4 +1,5 @@
 export type PeakKey = 'skills' | 'experience' | 'projects';
+export type PortfolioSection = 'overview' | PeakKey;
 
 export interface RepoLanguage { name: string; color: string | null; share: number }
 
@@ -52,7 +53,7 @@ export interface Portfolio {
   projects: ProjectItem[];
 }
 
-export interface CityPayload { repos: Repo[]; portfolio: Portfolio; tokenMissing: boolean }
+export interface CityPayload { repos: Repo[]; portfolio: Portfolio }
 
 export type PanelState =
   | { kind: 'default' }

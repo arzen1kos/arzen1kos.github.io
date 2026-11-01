@@ -1,0 +1,211 @@
+{
+  "profile": {
+    "name": "Arzenikos",
+    "headline": "Software Developer | QA | AI Security Engineer",
+    "bio": ""
+  },
+  "experience": [
+    {
+      "id": 1,
+      "title": "Software Developer—Intern & Capstone (A+)",
+      "organisation": "WalloPay",
+      "location": "Wellington, New Zealand (Remote)",
+      "startDate": "2025-12",
+      "endDate": "2026-03",
+      "summary": "End-to-end automated regression testing suite developed as a capstone project, awarded an A+ grade.",
+      "details": [
+        "Designed and built a scalable, end-to-end regression test suite (Mocha, Chai, WebdriverIO, Appium)",
+        "for web and mobile, using DynamoDB-backed test data to enable scalable, cloud-based execution via",
+        "AWS Device Farm",
+        "Collaborated with frontend developers via GitHub PR workflows to standardise UI element IDs in the",
+        "Ionic app, resolving cross-platform capture failures and stabilising Android test execution, as part of",
+        "an Agile/Scrum team running sprint ceremonies (daily standups, planning, reviews, & retrospectives)",
+        "Evaluated AWS Device Farm against cost, performance, and reliability criteria, and led its adoption",
+        "into the team's testing pipeline",
+        "Presented testing outcomes, quality metrics, and risk assessments to industry and academic panels,",
+        "translating technical findings into stakeholder-focused narratives tied to product delivery"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Student Assistant Librarian",
+      "organisation": "Ara Institute of Canterbury",
+      "location": "Christchurch, New Zealand",
+      "startDate": "2025-02",
+      "endDate": "2025-12",
+      "summary": "Guided students and staff in adopting digital tools and accessing library resources, translating \r\ntechnical guidance to varying skill levels as an early exercise in user-focused communication",
+      "details": []
+    },
+    {
+      "id": 2,
+      "title": "Junior Solutions Developer — Intern",
+      "organisation": "Colourful Birds Supervised Visit Centre",
+      "location": "Christchurch, New Zealand (Remote)",
+      "startDate": "2024-12",
+      "endDate": "2025-02",
+      "summary": "Proof-of-concept Power Apps solution for supervisor and client management, featuring OCR-driven data capture, automated Microsoft Forms integration, Dataverse-backed data storage.",
+      "details": [
+        "Proof-of-concept Power Apps solution for supervisor and client management.",
+        "OCR-driven data capture.",
+        "Automated Microsoft Forms integration.",
+        "Dataverse-backed data storage."
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Student Representative",
+      "organisation": "Ara Institute of Canterbury",
+      "location": "Christchurch, New Zealand",
+      "startDate": "2024-02",
+      "endDate": "2025-12",
+      "summary": "Represented student interests to faculty through structured feedback channels, directly influencing \r\nimprovements to course delivery and student experience",
+      "details": []
+    },
+    {
+      "id": 5,
+      "title": "Student Ambassador – Events & Communications",
+      "organisation": "Ara Institute of Canterbury",
+      "location": "Christchurch, New Zealand",
+      "startDate": "2024-01",
+      "endDate": "2025-12",
+      "summary": "Represented the institution through Student Ambassador Events and Communications roles, \r\ndelivering orientation presentations and campus tours to prospective students and authoring student \r\nmagazine articles that strengthened peer engagement and community connection.",
+      "details": []
+    }
+  ],
+  "skillCategories": [
+    {
+      "id": 1,
+      "name": "AI",
+      "color": "#e8572a",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/selfhst/icons/png/microsoft-foundry.png",
+        "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-png@latest/light/huggingface-color.png",
+        "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-png@latest/light/cursor.png",
+        "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-png@latest/light/claudecode-color.png",
+        "https://cdn.jsdelivr.net/gh/selfhst/icons/png/llama-cpp.png",
+        "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-png@latest/light/langchain-color.png",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/n8n.png",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/zapier.png",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tensorflow.png",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/pytorch.png",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/ollama.svg"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Core",
+      "color": "#4cc9f0",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/typescript.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/java.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/python.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/csharp.svg",
+        "https://cdn.simpleicons.org/cplusplus/00599C",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/php-light.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/ruby.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/dart.svg"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Database",
+      "color": "#4cc9f0",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/mysql.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/microsoft-sql-server-light.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/postgresql.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/mongodb.svg"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Frontend",
+      "color": "#1a9a8a",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/angular.svg",
+        "https://cdn.simpleicons.org/d3/F9A03C",
+        "https://cdn.simpleicons.org/react/61DAFB",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/astro.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/vite.svg"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Backend",
+      "color": "#3a6fd8",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/nodejs.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/django.svg",
+        "https://cdn.simpleicons.org/flask/3BABC3",
+        "https://cdn.simpleicons.org/express/0A0A0A",
+        "https://cdn.simpleicons.org/serverless/FD5750"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "DevOps",
+      "color": "#8a6a14",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/git.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/docker.svg",
+        "https://cdn.simpleicons.org/githubactions/2088FF",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "QA",
+      "color": "#6a4fc0",
+      "skills": [
+        "https://cdn.simpleicons.org/mocha/8D6748",
+        "https://cdn.simpleicons.org/junit5/25A162",
+        "https://cdn.simpleicons.org/jest/C21325",
+        "https://cdn.simpleicons.org/jasmine/8A4182",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/appium.svg",
+        "https://cdn.simpleicons.org/webdriverio/EA5906",
+        "https://cdn.simpleicons.org/chai/A30701"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Design",
+      "color": "#c0397a",
+      "skills": [
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/tailwind.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/flutter.svg",
+        "https://cdn.simpleicons.org/threedotjs/000000",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/blender.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/gimp.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/figma.svg",
+        "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/penpot.svg"
+      ]
+    }
+  ],
+  "softSkills": [
+    {
+      "name": "Creativity",
+      "description": "Finds a different angle when the obvious one is taken."
+    },
+    {
+      "name": "Communication",
+      "description": "Explains technical work plainly, in writing and out loud."
+    },
+    {
+      "name": "Public speaking",
+      "description": "Presents demos and ideas with a clear story."
+    },
+    {
+      "name": "Emotional intelligence",
+      "description": "Reads the room and adjusts to the people in it."
+    },
+    {
+      "name": "Adaptability",
+      "description": "Picks up new tools and domains quickly."
+    },
+    {
+      "name": "Teamwork",
+      "description": "Shares context early and gives credit freely."
+    }
+  ],
+  "projects": []
+}

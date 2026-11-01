@@ -7,7 +7,6 @@
 # Node.js dependencies
 node_modules/
 dist/
-package-lock.json
 
 # Build output
 .astro/
@@ -27,7 +26,3 @@ logs/
 /backend/.env
 /data/*.db
 /data/*.db-*
-
-# Netlify deployment items
-.netlify
-deno.lock
