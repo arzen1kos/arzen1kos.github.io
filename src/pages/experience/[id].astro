@@ -5,7 +5,7 @@ import { formatMonth } from '@/lib/format';
 export const prerender = false;
 
 const id = Number(Astro.params.id);
-const item = Number.isInteger(id) ? getExperience(id) : null;
+const item = Number.isInteger(id) ? await getExperience(id) : null;
 if (!item) return new Response('Not found', { status: 404 });
 const bullets = item.details.length ? item.details : [item.summary];
 ---

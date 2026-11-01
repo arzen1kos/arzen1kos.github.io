@@ -66,6 +66,8 @@ def portfolio_api(request):
         {
             'site': {
                 'name': profile.name if profile else '',
+                'headline': profile.headline if profile else '',
+                'bio': profile.bio if profile else '',
                 'avatar': '',
                 'specialisation': [],
                 'graduation': {'date': '', 'school': ''},

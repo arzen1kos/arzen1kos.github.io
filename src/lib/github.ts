@@ -32,8 +32,13 @@ interface GqlRepo {
 /** Every GITHUB_TOKEN_* environment variable is one account. */
 function discoverTokens(): string[] {
   const found = Object.entries(process.env)
-    .filter(([key, value]) => key.startsWith('GITHUB_TOKEN') && !!value)
-    .map(([, value]) => value!);
+    .filter(([key, value]) => (
+      (key === 'GITHUB_TOKEN' || key === 'GITHUB_TOKENS' || key.startsWith('GITHUB_TOKEN_'))
+      && !!value
+    ))
+    .flatMap(([key, value]) => key === 'GITHUB_TOKENS' ? value!.split(',') : [value!])
+    .map((value) => value.trim())
+    .filter(Boolean);
   return [...new Set(found)];
 }
 

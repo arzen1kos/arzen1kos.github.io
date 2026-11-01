@@ -9,5 +9,6 @@ if (existsSync(envFile)) {
   process.loadEnvFile(envFile);
 }
 
-const configuredPath = process.env.PORTFOLIO_DB_PATH ?? 'backend/db/portfolio.db';
-export const PORTFOLIO_DB_PATH = path.resolve(REPO_ROOT, configuredPath);
+export const DJANGO_API_URL = (
+  process.env.DJANGO_API_URL ?? 'http://127.0.0.1:8000'
+).replace(/\/+$/, '');

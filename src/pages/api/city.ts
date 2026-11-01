@@ -7,7 +7,8 @@ export const prerender = false;
 export const GET: APIRoute = async () => {
   try {
     const { repos, tokenMissing } = await getRepos();
-    return new Response(JSON.stringify({ repos, tokenMissing, portfolio: getPortfolio(repos) }), {
+    const portfolio = await getPortfolio(repos);
+    return new Response(JSON.stringify({ repos, tokenMissing, portfolio }), {
       headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
     });
   } catch (error) {
