@@ -423,8 +423,14 @@ export function CityScene(p: CitySceneProps) {
       <directionalLight position={[-20, 30, 15]} intensity={1.4} />
       <Rig />
       <OrbitControls
-        enablePan={false}
+        enableRotate
+        enablePan
         enableDamping
+        mouseButtons={{
+          LEFT: THREE.MOUSE.ROTATE,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.PAN,
+        }}
         target={[TARGET.x, TARGET.y, TARGET.z]}
         autoRotate={!p.hoverRepo && !p.hoverPeak}
         autoRotateSpeed={0.45}

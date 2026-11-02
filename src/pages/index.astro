@@ -1,7 +1,9 @@
 ---
 import Base from '@/layouts/Base.astro';
 import ContributionCity from '@/components/contribution-city/ContributionCity';
+import DragonCursor from '@/components/dragon/DragonCursor.tsx';
 ---
 <Base title="Arzenikos">
   <ContributionCity client:load />
+  <DragonCursor client:only="react" scale={0.1} />
 </Base>
