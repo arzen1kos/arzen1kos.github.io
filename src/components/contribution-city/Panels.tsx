@@ -1,49 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatDate, formatMonth, formatNumber } from '@/lib/format';
 import type { ContributionDay, ExperienceItem, GithubStats, PanelState, Portfolio, PortfolioSection, Repo, RepoLanguage } from './types';
-
-/* ---------- slow auto-scroll: starts after a pause, yields to the reader ---------- */
-
-function useAutoScroll(ref: RefObject<HTMLDivElement | null>, resetKey: string, enabled: boolean) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!enabled || !el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    el.scrollTop = 0;
-    const SPEED = 14; // px per second
-    let raf = 0, last = performance.now(), pausedUntil = last + 2500, endAt = 0, acc = 0, hovering = false;
-    const bump = () => { pausedUntil = performance.now() + 5000; };
-    const enter = () => { hovering = true; };
-    const leave = () => { hovering = false; bump(); };
-    el.addEventListener('wheel', bump, { passive: true });
-    el.addEventListener('touchstart', bump, { passive: true });
-    el.addEventListener('pointerenter', enter);
-    el.addEventListener('pointerleave', leave);
-    const tick = (now: number) => {
-      const dt = Math.min(now - last, 64) / 1000;
-      last = now;
-      const max = el.scrollHeight - el.clientHeight;
-      if (max > 2 && !hovering && now > pausedUntil) {
-        if (el.scrollTop >= max - 1) {
-          if (!endAt) endAt = now;
-          if (now - endAt > 2500) { el.scrollTop = 0; endAt = 0; acc = 0; pausedUntil = now + 2500; }
-        } else {
-          acc += SPEED * dt;
-          const step = Math.floor(acc);
-          if (step > 0) { el.scrollTop += step; acc -= step; }
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener('wheel', bump);
-      el.removeEventListener('touchstart', bump);
-      el.removeEventListener('pointerenter', enter);
-      el.removeEventListener('pointerleave', leave);
-    };
-  }, [enabled, ref, resetKey]);
-}
+import { useAutoScroll } from './useAutoScroll';
 
 function Shell({ id, children, footer, activeSection, onSelectSection, autoScroll = true }: {
   id: string;
@@ -237,6 +195,7 @@ function SkillsPanel({ portfolio, onSelectSection }: {
 function ExperiencePanel({ portfolio, onSelectSection }: {
   portfolio: Portfolio;
   onSelectSection: (section: PortfolioSection) => void;
+  autoScroll?: boolean;
 }) {
   const items = portfolio.experience;
   const [selectedExperience, setSelectedExperience] = useState<ExperienceItem | null>(null);
@@ -253,7 +212,7 @@ function ExperiencePanel({ portfolio, onSelectSection }: {
   }, [selectedExperience]);
 
   return (
-    <Shell id="experience" activeSection="experience" onSelectSection={onSelectSection} autoScroll={false}>
+    <Shell id="experience" activeSection="experience" onSelectSection={onSelectSection} autoScroll={true}>
       <h1 className="cc-title">Experience</h1>
       <p className="cc-lead">Explore the roles and projects that shaped my work.</p>
       <ol className="cc-timeline">

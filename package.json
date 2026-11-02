@@ -8,13 +8,13 @@
     "check": "astro check",
     "build": "astro check && astro build",
     "preview": "astro preview",
+    "test": "node --test scripts/lib/github-tokens.test.mjs scripts/lib/github-api.test.mjs scripts/lib/github-data.test.mjs",
     "dev:backend": "python backend/manage.py runserver",
     "db:setup": "node scripts/setup-db.mjs",
     "data:export": "node scripts/export-static-data.mjs",
     "data:github": "node scripts/export-public-repos.mjs"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.9",
     "@astrojs/react": "latest",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",

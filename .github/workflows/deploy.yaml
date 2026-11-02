@@ -25,7 +25,7 @@ jobs:
       - name: Export GitHub profile and public repository data
         run: npm run data:github
         env:
-          GITHUB_TOKENS: ${{ secrets.GITHUB_TOKENS || secrets.GH_PAT }}
+          GH_TOKENS: ${{ secrets.GH_TOKENS }}
       - run: npm run build
       - uses: actions/upload-pages-artifact@v4
         with:

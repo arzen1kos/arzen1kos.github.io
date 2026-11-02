@@ -51,6 +51,11 @@ can also be run manually from the Actions tab. It:
    statistics, contribution calendar, and public non-fork repositories.
 3. Builds the static Astro site and deploys the `dist` output.
 
+The GitHub API integration uses a small GraphQL client facade to keep network
+pagination and response mapping out of the build/export script. The panel
+router uses an explicit panel-state union, and panel scrolling is isolated in
+a reusable hook.
+
 ### Connect GitHub accounts
 
 Create one token for each account whose contribution activity and repositories
@@ -66,12 +71,12 @@ you want to include:
    token private, use an expiration, and revoke it when no longer needed.
 4. Generate the token and copy it immediately. GitHub will not show it again.
 5. For deployment, open this repository's **Settings → Secrets and variables
-   → Actions → New repository secret**. Name it `GITHUB_TOKENS` and paste
+   → Actions → New repository secret**. Name it `GH_TOKENS` and paste
    tokens separated by commas, with one token for each account.
-6. For local exports, put the tokens in `.env` as either
-   `GITHUB_TOKENS=token1,token2` or separate variables such as
-   `GITHUB_TOKEN_PERSONAL=token1` and `GITHUB_TOKEN_WORK=token2`. Never commit
-   `.env` or paste tokens into source files.
+6. For local exports, copy `.env.example` to `.env` and set either
+   `GH_TOKENS=token1,token2` or separate variables such as
+   `GH_TOKEN_PERSONAL=token1` and `GH_TOKEN_WORK=token2`. Never commit `.env`
+   or paste tokens into source files.
 7. Run **Actions → Deploy to GitHub Pages → Run workflow**, or push to the
    `github-pages` branch.
 
@@ -82,6 +87,9 @@ public-only data to `github.json` and `repos.json`. Tokens are used only during
 the build and are not included in the static site. Private repositories are
 filtered out before either JSON file is written. Contributions from accounts
 are combined by date in the displayed calendar.
+
+Run `npm test` to verify token discovery, GraphQL paging, private-repository
+filtering, and multi-account contribution aggregation without live credentials.
 
 The repository is `arzen1kos.github.io`, so Astro uses the root path
 (`https://arzen1kos.github.io/`). In the GitHub repository, open
