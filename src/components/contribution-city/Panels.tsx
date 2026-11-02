@@ -146,7 +146,7 @@ function RepoPanel({ repo, onSelectSection }: {
       <p className="cc-meta">{repo.account} · {status}</p>
       <div className="cc-title-btn-group">
         <a className="cc-btn repo-btn" href={repo.url} target="_blank" rel="noreferrer">
-          <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[repo.name]?.image || DEFAULT.image} alt="Repository icon" />
+          <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[repo.name]?.image || DEFAULT.image}/>
         </a>
         <h1 className="cc-title">{repo.name}</h1>
       </div>
@@ -278,12 +278,12 @@ function ExperiencePanel({ portfolio, onSelectSection }: {
 
 /* ---------- projects ---------- */
 
-/* ---------- projects ---------- */
-
-const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-
 /** false = every GitHub repo gets a card. true = only repos you have given a project row. */
 const ONLY_RENAMED = false;
+const EXCLUDED_REPOSITORIES = new Set([
+  'arzen1kos/arzen1kos',
+  'arzenik0s/arzenik0s',
+].map((name) => name.toLowerCase()));
 
 interface ProjectCard {
   key: string;
@@ -308,6 +308,7 @@ function ProjectsPanel({ portfolio, repos, onSelectSection }: {
 
     // 1. Your project rows, in your sort order. Linked ones take their data from the GitHub repo.
     for (const p of portfolio.projects) {
+      if (p.repoFullName && EXCLUDED_REPOSITORIES.has(p.repoFullName.toLowerCase())) continue;
       const repo = p.repoFullName ? byName.get(p.repoFullName.toLowerCase()) : undefined;
       if (repo) claimed.add(repo.id);
       out.push({
@@ -323,7 +324,7 @@ function ProjectsPanel({ portfolio, repos, onSelectSection }: {
     // 2. Every other repo, most active first, under its GitHub name.
     if (!ONLY_RENAMED) {
       [...repos]
-        .filter((r) => !claimed.has(r.id))
+        .filter((r) => !claimed.has(r.id) && !EXCLUDED_REPOSITORIES.has(r.fullName.toLowerCase()))
         .sort((a, b) => b.commits - a.commits)
         .forEach((r) => out.push({
           key: `r-${r.id}`,
@@ -361,12 +362,11 @@ function ProjectsPanel({ portfolio, repos, onSelectSection }: {
           const inner = (
             <>
               <span className="cc-badge repo-btn">
-                <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[c.name]?.image || DEFAULT.image} alt="Repository icon" />
+                <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[c.name]?.image || DEFAULT.image}/>
               </span>
               <h2>{c.name}</h2>
               <p>{c.description}</p>
               <ul>{c.languages.map((l) => <li key={l}>{l}</li>)}</ul>
-              {/* {c.url && <span className="cc-btn">See Project <span aria-hidden>↗</span></span>} */}
             </>
           );
           return c.url
