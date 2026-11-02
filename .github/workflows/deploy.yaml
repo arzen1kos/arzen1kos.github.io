@@ -26,8 +26,6 @@ jobs:
         run: npm run data:github
         env:
           GH_TOKENS: ${{ secrets.GH_TOKENS }}
-          GH_TOKEN_PERSONAL: ${{ secrets.GH_TOKEN_PERSONAL }}
-          GH_TOKEN_WORK: ${{ secrets.GH_TOKEN_WORK }}
       - run: npm run build
       - uses: actions/upload-pages-artifact@v4
         with:
