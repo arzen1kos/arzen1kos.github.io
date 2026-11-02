@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { formatDate, formatMonth, formatNumber } from '@/lib/format';
 import type { PanelState, PeakKey, Portfolio, Repo, RepoLanguage } from './types';
+import { PROJECT_IMAGE_REGISTRY, DEFAULT_PROJECT } from '@/data/project-registry'; 
+
+const IMAGE_REGISTRY = PROJECT_IMAGE_REGISTRY;
+const DEFAULT = DEFAULT_PROJECT;
 
 const ADMIN_URL: string = import.meta.env.PUBLIC_DJANGO_ADMIN_URL ?? '/admin/';
 
@@ -141,10 +145,12 @@ function RepoPanel({ repo }: { repo: Repo }) {
     <Shell id={`repo:${repo.id}`}>
       <p className="cc-meta">{repo.account} · {status}</p>
       <div className="cc-title-btn-group">
-        <a className="cc-btn" href={repo.url} target="_blank" rel="noreferrer"><img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/github-light.png"></img></a>
+        <a className="cc-btn repo-btn" href={repo.url} target="_blank" rel="noreferrer">
+          <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[repo.name]?.image || DEFAULT.image} alt="Repository icon" />
+          </a>
         <h1 className="cc-title">{repo.name}</h1>
       </div>
-      <p className="cc-body">{repo.description ?? 'No description.'}</p>
+      <p className="cc-body">{repo.description ?? ''}</p>
       <p className="cc-big">{formatNumber(repo.commits)}<span> commits</span></p>
       <p className="cc-muted">Last pushed {formatDate(repo.pushedAt)}</p>
       <h2 className="cc-h2">Languages</h2>
@@ -216,8 +222,6 @@ function ExperiencePanel({ portfolio }: { portfolio: Portfolio }) {
     </Shell>
   );
 }
-
-/* ---------- projects ---------- */
 
 /* ---------- projects ---------- */
 
@@ -297,11 +301,12 @@ function ProjectsPanel({ portfolio, repos }: { portfolio: Portfolio; repos: Repo
         {shown.map((c) => {
           const inner = (
             <>
-              <span className="cc-badge" style={{ background: c.color }}>{initials(c.name)}</span>
+              <span className="cc-badge repo-btn">
+                <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[c.name]?.image || DEFAULT.image} alt="Repository icon" />
+              </span>
               <h2>{c.name}</h2>
               <p>{c.description}</p>
               <ul>{c.languages.map((l) => <li key={l}>{l}</li>)}</ul>
-              {/* {c.url && <span className="cc-btn">See Project <span aria-hidden>↗</span></span>} */}
             </>
           );
           return c.url

@@ -14,6 +14,7 @@
 .cc-canvas canvas { display: block; touch-action: none; }
 
 /* ---- fading honeycomb ---- */
+
 .cc-honeycomb {
   /* position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .55; mix-blend-mode: screen; */
   /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48.5' height='84' viewBox='0 0 48.5 84'%3E%3Cpath d='M24.25 14L48.5 28V56L24.25 70L0 56V28Z M24.25 0V14 M24.25 70V84' fill='none' stroke='%237fd8ff' stroke-opacity='.35' stroke-width='1'/%3E%3C/svg%3E"); */
@@ -57,13 +58,22 @@
   opacity: 0.5;
 }
 
-.cc-btn img {
+.repo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--cc-paper);
+  padding: 0.1rem;
+}
+
+.cc-btn img, .cc-badge img {
   display: inline-block;
   /* margin-top: 22px; */
-  /* padding: 12px 18px; */
+  /* padding: 0rem; */
   align-items: center;
 
-  width: 1.2rem;
+  width: 3rem;
   /* background: var(--cc-ink); */
   color: var(--cc-paper);
   /* font-weight: 600; */
@@ -466,13 +476,14 @@ a.cc-card:hover {
   
 }
 .cc-badge {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  color: var(--cc-paper);
-  font-weight: 800;
-  font-size: 1.15rem;
+  /* display: grid; */
+  /* place-items: center; */
+  padding: 1.2rem;
+  width: 30px;
+  height: 30px;
+  /* color: var(--cc-paper); */
+  /* font-weight: 800; */
+  /* font-size: 1.15rem; */
   
 }
 .cc-card h2 {
