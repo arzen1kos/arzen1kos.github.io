@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { formatDate, formatMonth, formatNumber } from '@/lib/format';
 import type { ContributionDay, ExperienceItem, GithubStats, PanelState, Portfolio, PortfolioSection, Repo, RepoLanguage } from './types';
 import { useAutoScroll } from './useAutoScroll';
+import { PROJECT_IMAGE_REGISTRY, DEFAULT_PROJECT } from '@/lib/repo-registry'; 
+
+const IMAGE_REGISTRY = PROJECT_IMAGE_REGISTRY;
+const DEFAULT = DEFAULT_PROJECT;
 
 function Shell({ id, children, footer, activeSection, onSelectSection, autoScroll = true }: {
   id: string;
@@ -99,14 +103,6 @@ function DefaultPanel({ portfolio, repos, github, onSelectSection }: {
       {portfolio.profile.headline && <p className="cc-lead">{portfolio.profile.headline}</p>}
       {portfolio.profile.bio && <p className="cc-body">{portfolio.profile.bio}</p>}
       <p className="cc-big">{formatNumber(stats.commits)}<span> commits across {repos.length} public repositories from {github.accounts.length} accounts</span></p>
-      <dl className="cc-stats cc-github-stats">
-        <div><dt>Contributions (year, all accounts)</dt><dd>{formatNumber(github.totalContributions)}</dd></div>
-        <div><dt>Public repositories</dt><dd>{formatNumber(repos.length)}</dd></div>
-        <div><dt>Followers (all accounts)</dt><dd>{formatNumber(stats.followers)}</dd></div>
-        <div><dt>Stars (all accounts)</dt><dd>{formatNumber(stats.stars)}</dd></div>
-        <div><dt>Forks (all accounts)</dt><dd>{formatNumber(stats.forks)}</dd></div>
-        <div><dt>Archived</dt><dd>{stats.archived}</dd></div>
-      </dl>
       <h2 className="cc-h2">Contribution activity</h2>
       <ContributionCalendar days={github.contributionDays} />
       <p className="cc-muted">Daily contributions over the past year</p>
@@ -149,8 +145,8 @@ function RepoPanel({ repo, onSelectSection }: {
     <Shell id={`repo:${repo.id}`} activeSection="overview" onSelectSection={onSelectSection}>
       <p className="cc-meta">{repo.account} · {status}</p>
       <div className="cc-title-btn-group">
-        <a className="cc-btn" href={repo.url} target="_blank" rel="noreferrer" aria-label={`View ${repo.fullName} on GitHub`}>
-          <span aria-hidden="true">↗</span>
+        <a className="cc-btn repo-btn" href={repo.url} target="_blank" rel="noreferrer">
+          <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[repo.name]?.image || DEFAULT.image} alt="Repository icon" />
         </a>
         <h1 className="cc-title">{repo.name}</h1>
       </div>
@@ -364,7 +360,9 @@ function ProjectsPanel({ portfolio, repos, onSelectSection }: {
         {shown.map((c) => {
           const inner = (
             <>
-              <span className="cc-badge" style={{ background: c.color }}>{initials(c.name)}</span>
+              <span className="cc-badge repo-btn">
+                <img src={(IMAGE_REGISTRY as Record<string, { image: string }>)[c.name]?.image || DEFAULT.image} alt="Repository icon" />
+              </span>
               <h2>{c.name}</h2>
               <p>{c.description}</p>
               <ul>{c.languages.map((l) => <li key={l}>{l}</li>)}</ul>
