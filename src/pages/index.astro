@@ -1,10 +1,10 @@
 ---
 import Base from '@/layouts/Base.astro';
 import ContributionCity from '@/components/contribution-city/ContributionCity';
-import CursorDragon from '@/components/dragon/CursorDragon.astro';
+import DragonCursor from '@/components/dragon/DragonCursor.tsx';
 export const prerender = false;
 ---
 <Base title="Arzenikos | Portfoliio">
   <ContributionCity client:load />
-  <CursorDragon />
+  <DragonCursor client:only="react" scale={0.1} />
 </Base>
