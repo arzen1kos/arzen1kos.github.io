@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import { citySlots, TOWER_RADIUS } from './layout';
 import { ISLAND, MAX_PEAK, MOUNTAIN, OCT_CUT, PEAKS, octagonPoints, terrainHeight } from './terrain';
 import type { PeakKey, Repo } from './types';
-import { CursorDragon } from './CursorDragon';
 
 /* ------------------------------------------------------------------ */
 /* Palette + shared resources (one copy for the whole scene = low RAM) */
@@ -437,7 +436,6 @@ export function CityScene(p: CitySceneProps) {
       <Island />
       <Mountain m={mountain} />
       <Towers placed={placed} activeId={activeId} onHover={p.onHoverRepo} onSelect={p.onSelectRepo} />
-      <CursorDragon towers={placed} />
       {PEAKS.map((peak) => (
         <PeakHex key={peak.key} peak={peak} active={p.hoverPeak === peak.key} onHover={p.onHoverPeak} onSelect={p.onSelectPeak} />
       ))}

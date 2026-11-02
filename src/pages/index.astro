@@ -1,8 +1,10 @@
 ---
 import Base from '@/layouts/Base.astro';
 import ContributionCity from '@/components/contribution-city/ContributionCity';
+import CursorDragon from '@/components/dragon/CursorDragon.astro';
 export const prerender = false;
 ---
 <Base title="Arzenikos | Portfoliio">
   <ContributionCity client:load />
+  <CursorDragon />
 </Base>
