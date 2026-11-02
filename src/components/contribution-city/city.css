@@ -62,7 +62,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--cc-paper);
+  background: none;
   padding: 0.1rem;
 }
 
