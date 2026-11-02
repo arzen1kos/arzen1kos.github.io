@@ -42,5 +42,5 @@ export const PROJECT_IMAGE_REGISTRY = {
 }
 
 export const DEFAULT_PROJECT = {
-  image: "https://github.com/arzen1kos/arzen1kos.github.io/blob/github-pages/public/favicon.svg",
+  image: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/github-light.svg",
 };
