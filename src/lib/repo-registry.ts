@@ -7,6 +7,10 @@ export const PROJECT_IMAGE_REGISTRY = {
         image: "https://github.com/user-attachments/assets/2a33a655-abf0-47b1-8439-e02193796613",
         featured: true,
     },
+    "obsidian-job-application-tracker": {
+        image: "https://github.com/user-attachments/assets/262f8924-47ba-4e8a-aa38-161a360fd80a",
+        featured: true,
+    },
     "music-catalogue": {
         image: "https://github.com/user-attachments/assets/ca1d94d3-5a93-4335-9596-fa1ecac3559a",
         featured: true,
