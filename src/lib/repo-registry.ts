@@ -28,7 +28,7 @@ export const PROJECT_IMAGE_REGISTRY = {
         featured: true,
     },
     "oarbit-mobile-app": {
-        image: "https://github.com/user-attachments/assets/b0a3eefe-9ca3-402d-9721-a73547030ff4",
+        image: "https://github.com/user-attachments/assets/877c7cd7-091a-413a-a00c-e1cbb713fe4b",
         featured: true,
     },
     "music-catalogue": {
